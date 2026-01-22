@@ -1,0 +1,82 @@
+// Configuração do Cliente (Quem gera o TypeScript)
+generator client {
+  provider = "prisma-client-js"
+  // Removi o output personalizado para facilitar seus imports
+}
+
+// Configuração do Banco de Dados
+datasource db {
+  provider = "sqlite"
+}
+
+// --- SUAS TABELAS (MODELS) ---
+
+model Gerencia {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("SUPERVISOR") // "ADMIN" ou "SUPERVISOR"
+
+  // Relação: Um usuário pode gerenciar um setor
+  managedSetor Setor?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setor {
+  id   String @id @default(uuid())
+  name String
+
+  // Relação: Pertence a um supervisor (Gerencia)
+  supervisorId String   @unique
+  supervisor   Gerencia @relation(fields: [supervisorId], references: [id])
+
+  // Relação: Setor tem funcionários
+  funcionario Funcionario[]
+
+  // Relação: Regras de comissão
+  commissionRules RegrasDeComissao[]
+}
+
+model Funcionario {
+  id     String  @id @default(uuid())
+  name   String
+  ativo  Boolean @default(true)
+
+  setorId String
+  setor   Setor  @relation(fields: [setorId], references: [id])
+
+  metricas MetricasMensais[]
+}
+
+model MetricasMensais {
+  id    String @id @default(uuid())
+  month Int
+  year  Int
+
+  countNota5 Int @default(0)
+  countNota4 Int @default(0)
+  countNota3 Int @default(0)
+  countNota2 Int @default(0)
+  countNota1 Int @default(0)
+
+  finalScore    Float?
+  ValorComissao Float?
+
+  funcionarioId String
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  // Chave composta única: O funcionário só pode ter uma métrica por mês/ano
+  @@unique([funcionarioId, month, year])
+}
+
+model RegrasDeComissao {
+  id             String @id @default(uuid())
+  PorcentagemMin Float
+  ValorComissao  Float
+
+  setorId String
+  setor   Setor  @relation(fields: [setorId], references: [id])
+}
