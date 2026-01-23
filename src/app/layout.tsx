@@ -14,13 +14,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        <Provider>
-          <header />
-          {children}
-          <footer />
-        </Provider>
+    // o suppressHydrationWarning é para evitar avisos de inconsistência entre server e client
+    <html lang="pt-BR" suppressHydrationWarning={true}>
+      <body className={inter.className} suppressHydrationWarning={true}>
+        <Provider>{children}</Provider>
       </body>
     </html>
   );

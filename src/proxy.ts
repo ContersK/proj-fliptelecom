@@ -5,7 +5,8 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/"];
 const publicRoutes = ["/login"];
 
-export function middleware(request: NextRequest) {
+// Next.js proxy handler (substitui o antigo middleware)
+export function proxy(request: NextRequest) {
   // 2. Tenta pegar o cookie de autenticação (vamos chamar de 'session_token')
   const token = request.cookies.get("session_token")?.value;
 
