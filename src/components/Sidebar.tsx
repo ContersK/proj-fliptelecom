@@ -10,7 +10,7 @@ import {
   Image,
   Spacer,
   IconButton,
-  Tooltip, // Importamos o namespace Tooltip
+  Tooltip,
 } from "@chakra-ui/react";
 import {
   LayoutDashboard,
@@ -63,34 +63,31 @@ export function Sidebar({ onToggle }: SidebarProps) {
       <VStack h="full" align="stretch" gap={0}>
         {/* CABEÇALHO */}
         <Flex
-          h="70px"
+          h="80px"
           align="center"
-          justify={collapsed ? "center" : "space-between"}
-          px={collapsed ? 2 : 6}
+          justify="center" // Sempre centralizado agora
+          px={collapsed ? 2 : 4}
           bg="white"
         >
-          {!collapsed ? (
-            <Image
-              src="/logo-flip.png"
-              alt="Flip"
-              h="32px"
-              objectFit="contain"
-            />
-          ) : (
-            <Text color="#0044CC" fontWeight="bold" fontSize="xl">
-              F
-            </Text>
-          )}
+          {/* LÓGICA DA LOGO ALTERADA AQUI */}
+          <Image
+            src="/logo-flip.png"
+            alt="Flip Telecom"
+            // Se recolhido: altura 30px (menor). Se aberto: altura 50px (maior)
+            h={collapsed ? "30px" : "50px"}
+            w="auto"
+            objectFit="contain"
+            transition="height 0.3s ease" // Animação suave ao trocar de tamanho
+          />
         </Flex>
 
         {/* BOTÃO DE CONTROLE */}
-        <Box position="absolute" right="-12px" top="84px" zIndex={110}>
+        <Box position="absolute" right="-12px" top="94px" zIndex={110}>
           <IconButton
             aria-label="Toggle Sidebar"
             onClick={handleCollapse}
             size="xs"
             rounded="full"
-            // No v3, cores personalizadas vão em css var ou bg direto se não estiverem no tema
             bg="blue.500"
             color="white"
             shadow="md"
@@ -148,10 +145,8 @@ export function Sidebar({ onToggle }: SidebarProps) {
                 style={{ textDecoration: "none", width: "100%" }}
               >
                 {collapsed ? (
-                  // Tooltip v3 Nativo
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
-                      {/* Box wrapper necessário para tooltip trigger funcionar bem em alguns casos */}
                       <Box>{LinkContent}</Box>
                     </Tooltip.Trigger>
                     <Tooltip.Positioner>
@@ -179,7 +174,6 @@ export function Sidebar({ onToggle }: SidebarProps) {
 
         {/* RODAPÉ */}
         <Box p={4} borderTop="1px solid rgba(255,255,255,0.1)">
-          {/* Área livre para versão do sistema */}
           {!collapsed && (
             <Text fontSize="10px" textAlign="center" opacity={0.4}>
               v1.0

@@ -12,11 +12,11 @@ datasource db {
 // --- SUAS TABELAS (MODELS) ---
 
 model Gerencia {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("SUPERVISOR") // "ADMIN" ou "SUPERVISOR"
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  name     String
+  role     String @default("SUPERVISOR") // "ADMIN" ou "SUPERVISOR"
 
   // Relação: Um usuário pode gerenciar um setor
   managedSetor Setor?
@@ -41,14 +41,19 @@ model Setor {
 }
 
 model Funcionario {
-  id     String  @id @default(uuid())
-  name   String
-  ativo  Boolean @default(true)
-
-  setorId String
-  setor   Setor  @relation(fields: [setorId], references: [id])
-
-  metricas MetricasMensais[]
+  id              String            @id @default(cuid())
+  nome            String
+  email           String?           @unique
+  telefone        String?
+  cargo           String            @default("Suporte N1")
+  turno           String // "A", "B", "Comercial", etc.
+  status          String            @default("ATIVO") // "ATIVO", "FERIAS", "INATIVO"
+  dataAdmissao    DateTime          @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  setor           Setor?            @relation(fields: [setorId], references: [id])
+  setorId         String?
+  metricasMensais MetricasMensais[]
 }
 
 model MetricasMensais {

@@ -54,7 +54,7 @@ export function Navbar() {
     >
       <Flex h="full" align="center" justify="space-between">
         <Text fontSize="lg" fontWeight="bold" color="gray.700">
-          Visão Geral
+          Sistema de Gestão Flip Telecom
         </Text>
 
         <HStack gap={6}>
