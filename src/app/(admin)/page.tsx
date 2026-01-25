@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   SimpleGrid,
@@ -12,6 +14,7 @@ import {
   Heading,
   Card,
   Table,
+  Input,
 } from "@chakra-ui/react";
 import {
   AlertTriangle,
@@ -21,6 +24,7 @@ import {
   TrendingUp,
   Award,
   Calendar,
+  XCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -34,64 +38,50 @@ import {
   Cell,
 } from "recharts";
 
-const EQUIPE_METRICS = [
-  {
-    name: "Rafael Alencar",
-    turno: "A",
-    atendimentos: 223,
-    pontuacao: 271,
-    maxPossivel: 325,
-    percentual: 93,
-  },
-  {
-    name: "Junior",
-    turno: "A",
-    atendimentos: 310,
-    pontuacao: 1072,
-    maxPossivel: 1125,
-    percentual: 95,
-  },
-  {
-    name: "Heitor",
-    turno: "A",
-    atendimentos: 454,
-    pontuacao: 1723,
-    maxPossivel: 1850,
-    percentual: 93,
-  },
-  {
-    name: "Lucas",
-    turno: "B",
-    atendimentos: 631,
-    pontuacao: 2019,
-    maxPossivel: 2285,
-    percentual: 88,
-  },
-  {
-    name: "Luan (Você)",
-    turno: "B",
-    atendimentos: 455,
-    pontuacao: 1734,
-    maxPossivel: 1855,
-    percentual: 93,
-    destaque: true,
-  },
-  {
-    name: "Bruno",
-    turno: "B",
-    atendimentos: 564,
-    pontuacao: 1470,
-    maxPossivel: 1685,
-    percentual: 87,
-  },
-  {
-    name: "Erik",
-    turno: "A",
-    atendimentos: 232,
-    pontuacao: 361,
-    maxPossivel: 550,
-    percentual: 65,
-  },
+type Funcionario = {
+  id: string;
+  nome: string;
+  turno: string;
+  status: string;
+};
+
+type MetricasMensais = {
+  funcionarioId: string;
+  countNota5: number;
+  countNota4: number;
+  countNota3: number;
+  countNota2: number;
+  countNota1: number;
+  finalScore?: number | null;
+  ValorComissao?: number | null;
+};
+
+type DashboardRow = {
+  id: string;
+  name: string;
+  turno: string;
+  atendimentos: number;
+  pontuacao: number;
+  maxPossivel: number;
+  percentual: number;
+  bonus: number;
+  destaque?: boolean;
+  atingiuMedia?: boolean;
+};
+
+const MONTHS_PT = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 function calcularBonus(percentual: number) {
@@ -103,24 +93,188 @@ function calcularBonus(percentual: number) {
   return 0;
 }
 
-const totalAtendimentos = EQUIPE_METRICS.reduce(
-  (acc, curr) => acc + curr.atendimentos,
-  0,
-);
-const totalBonus = EQUIPE_METRICS.reduce(
-  (acc, curr) => acc + calcularBonus(curr.percentual),
-  0,
-);
-const mediaEquipe = Math.round(
-  EQUIPE_METRICS.reduce((acc, curr) => acc + curr.percentual, 0) /
-    EQUIPE_METRICS.length,
-);
-const abaixoDaMeta = EQUIPE_METRICS.filter((t) => t.percentual < 80).length;
-const acimaDe90 = EQUIPE_METRICS.filter((t) => t.percentual >= 90).length;
-
 export default function DashboardSupport() {
+  const router = useRouter();
+  const [referenceMonth, setReferenceMonth] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${now.getFullYear()}-${month}`;
+  });
+  const [equipeMetrics, setEquipeMetrics] = useState<DashboardRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const cardBg = "white";
   const borderColor = "gray.200";
+
+  const { month, year, referenceLabel } = useMemo(() => {
+    const [y, m] = referenceMonth.split("-").map(Number);
+    const safeMonth = Number.isFinite(m) ? m : new Date().getMonth() + 1;
+    const safeYear = Number.isFinite(y) ? y : new Date().getFullYear();
+    return {
+      month: safeMonth,
+      year: safeYear,
+      referenceLabel: `${MONTHS_PT[safeMonth - 1] ?? "Mês"}/${safeYear}`,
+    };
+  }, [referenceMonth]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchDashboard() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [funcRes, metRes] = await Promise.all([
+          fetch("/api/funcionarios"),
+          fetch(`/api/metricas?month=${month}&year=${year}`),
+        ]);
+
+        if (!funcRes.ok || !metRes.ok) {
+          throw new Error("Erro ao carregar dados do dashboard");
+        }
+
+        const funcionarios = (await funcRes.json()) as Funcionario[];
+        const metricas = (await metRes.json()) as MetricasMensais[];
+
+        const metricasMap = new Map(
+          metricas.map((metrica) => [metrica.funcionarioId, metrica]),
+        );
+
+        // Calcular média de atendimentos por setor/cargo
+        const atendimentosPorSetor = new Map<string, number[]>();
+        funcionarios.forEach((func) => {
+          const metrica = metricasMap.get(func.id);
+          if (metrica) {
+            // Usa setor se existir, senão usa cargo como fallback
+            const grupo = func.setor?.nome || func.cargo || "Sem Classificação";
+            if (!atendimentosPorSetor.has(grupo)) {
+              atendimentosPorSetor.set(grupo, []);
+            }
+            const countNota5 = metrica.countNota5 ?? 0;
+            const countNota4 = metrica.countNota4 ?? 0;
+            const countNota3 = metrica.countNota3 ?? 0;
+            const countNota2 = metrica.countNota2 ?? 0;
+            const countNota1 = metrica.countNota1 ?? 0;
+            const atendimentos =
+              countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+            atendimentosPorSetor.get(grupo)!.push(atendimentos);
+          }
+        });
+
+        // Calcular médias por setor
+        const mediaAtendimentosPorSetor = new Map<string, number>();
+        atendimentosPorSetor.forEach((valores, setor) => {
+          const media =
+            valores.reduce((a, b) => a + b, 0) / valores.length || 0;
+          mediaAtendimentosPorSetor.set(setor, media);
+        });
+
+        const rows = funcionarios
+          .filter((f) => f.status !== "INATIVO")
+          .map((funcionario) => {
+            const metrica = metricasMap.get(funcionario.id);
+            const countNota5 = metrica?.countNota5 ?? 0;
+            const countNota4 = metrica?.countNota4 ?? 0;
+            const countNota3 = metrica?.countNota3 ?? 0;
+            const countNota2 = metrica?.countNota2 ?? 0;
+            const countNota1 = metrica?.countNota1 ?? 0;
+            const atendimentos =
+              countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+            const pontuacao =
+              countNota5 * 5 +
+              countNota4 * 4 +
+              countNota3 * 3 +
+              countNota2 * 2 +
+              countNota1 * 1;
+            const maxPossivel = atendimentos * 5;
+            const percentual =
+              maxPossivel > 0 ? Math.round((pontuacao / maxPossivel) * 100) : 0;
+
+            // Validação: precisa ter atendimentos >= média do setor/cargo
+            const grupo =
+              funcionario.setor?.nome ||
+              funcionario.cargo ||
+              "Sem Classificação";
+            const mediaGrupo = mediaAtendimentosPorSetor.get(grupo) || 0;
+            const atendeMinimo = atendimentos >= mediaGrupo && mediaGrupo > 0;
+            let bonus = 0;
+            if (atendeMinimo && percentual >= 80) {
+              bonus = calcularBonus(percentual);
+            }
+
+            return {
+              id: funcionario.id,
+              name: funcionario.nome,
+              turno: funcionario.turno,
+              atendimentos,
+              pontuacao,
+              maxPossivel,
+              percentual,
+              bonus,
+              atingiuMedia: atendeMinimo,
+            } satisfies DashboardRow;
+          });
+
+        if (isMounted) {
+          setEquipeMetrics(rows);
+        }
+      } catch (fetchError) {
+        console.error(fetchError);
+        if (isMounted) {
+          setError("Não foi possível carregar os dados do dashboard.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [month, year]);
+
+  const equipeOrdenada = useMemo(
+    () => [...equipeMetrics].sort((a, b) => b.percentual - a.percentual),
+    [equipeMetrics],
+  );
+
+  const totalAtendimentos = useMemo(
+    () => equipeMetrics.reduce((acc, curr) => acc + curr.atendimentos, 0),
+    [equipeMetrics],
+  );
+
+  const totalBonus = useMemo(
+    () => equipeMetrics.reduce((acc, curr) => acc + curr.bonus, 0),
+    [equipeMetrics],
+  );
+
+  const mediaEquipe = useMemo(() => {
+    if (equipeMetrics.length === 0) return 0;
+    // Retorna a média de atendimentos (total de atendimentos / número de funcionários)
+    return Math.round(
+      equipeMetrics.reduce((acc, curr) => acc + curr.atendimentos, 0) /
+        equipeMetrics.length,
+    );
+  }, [equipeMetrics]);
+
+  const abaixoDaMeta = useMemo(
+    () => equipeMetrics.filter((t) => t.percentual < 80).length,
+    [equipeMetrics],
+  );
+
+  const acimaDe90 = useMemo(
+    () => equipeMetrics.filter((t) => t.percentual >= 90).length,
+    [equipeMetrics],
+  );
+
+  const percentualEquipe90 = useMemo(() => {
+    if (equipeMetrics.length === 0) return 0;
+    return Math.round((acimaDe90 / equipeMetrics.length) * 100);
+  }, [acimaDe90, equipeMetrics.length]);
 
   return (
     <Box>
@@ -191,10 +345,27 @@ export default function DashboardSupport() {
                     PERÍODO DE REFERÊNCIA
                   </Text>
                   <Text fontSize="md" fontWeight="bold" color="white">
-                    Janeiro/2026
+                    {referenceLabel}
                   </Text>
                 </Box>
+                <Input
+                  type="month"
+                  value={referenceMonth}
+                  onChange={(event) => setReferenceMonth(event.target.value)}
+                  disabled={loading}
+                  size="sm"
+                  w="150px"
+                  bg="whiteAlpha.200"
+                  borderColor="whiteAlpha.400"
+                  color="white"
+                  _placeholder={{ color: "whiteAlpha.700" }}
+                />
               </HStack>
+              {error && (
+                <Text fontSize="xs" color="red.100">
+                  {error}
+                </Text>
+              )}
             </VStack>
           </Flex>
         </Box>
@@ -238,7 +409,7 @@ export default function DashboardSupport() {
                   OPA + Ligações
                 </Text>
                 <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                  7 técnicos
+                  {equipeMetrics.length} técnicos
                 </Badge>
               </HStack>
             </Card.Body>
@@ -269,8 +440,11 @@ export default function DashboardSupport() {
                     MÉDIA DA EQUIPE
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
-                    {mediaEquipe}%
+                    {mediaEquipe}
                   </Heading>
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    atendimentos/técnico
+                  </Text>
                 </Box>
                 <Box
                   bg={mediaEquipe >= 90 ? "green.50" : "orange.50"}
@@ -318,7 +492,14 @@ export default function DashboardSupport() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{
+              transform: "translateY(-4px)",
+              boxShadow: "2xl",
+              cursor: "pointer",
+            }}
+            onClick={() => router.push("/comissoes")}
+            role="button"
+            tabIndex={0}
           >
             <Box
               h="4px"
@@ -336,7 +517,7 @@ export default function DashboardSupport() {
                     PREVISÃO DE BÔNUS
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
-                    R$ {totalBonus.toLocaleString()}
+                    R$ {totalBonus.toLocaleString("pt-BR")}
                   </Heading>
                 </Box>
                 <Box bg="purple.50" p={3} borderRadius="xl">
@@ -345,15 +526,10 @@ export default function DashboardSupport() {
               </Flex>
               <HStack justify="space-between">
                 <Text fontSize="xs" color="gray.500">
-                  Valor total mensal
+                  Clique para gerenciar comissões
                 </Text>
                 <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                  {
-                    EQUIPE_METRICS.filter(
-                      (t) => calcularBonus(t.percentual) > 0,
-                    ).length
-                  }{" "}
-                  elegíveis
+                  {equipeMetrics.filter((t) => t.bonus > 0).length} elegíveis
                 </Badge>
               </HStack>
             </Card.Body>
@@ -396,8 +572,7 @@ export default function DashboardSupport() {
                   Acima de 90%
                 </Text>
                 <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                  {Math.round((acimaDe90 / EQUIPE_METRICS.length) * 100)}% da
-                  equipe
+                  {percentualEquipe90}% da equipe
                 </Badge>
               </HStack>
             </Card.Body>
@@ -426,17 +601,15 @@ export default function DashboardSupport() {
                 </Text>
               </Box>
               <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
-                7 técnicos ativos
+                {equipeMetrics.length} técnicos ativos
               </Badge>
             </Flex>
             <Box h="320px" w="full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[...EQUIPE_METRICS].sort(
-                    (a, b) => b.percentual - a.percentual,
-                  )}
+                  data={equipeOrdenada}
                   layout="vertical"
-                  margin={{ left: 20, right: 20 }}
+                  margin={{ left: 20, right: 60 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -453,7 +626,7 @@ export default function DashboardSupport() {
                     dataKey="name"
                     type="category"
                     width={120}
-                    tick={{ fontSize: 12, fill: "#2D3748", fontWeight: 500 }}
+                    tick={{ fontSize: 12, fill: "#FFFFFF", fontWeight: 600 }}
                   />
                   <Tooltip
                     cursor={{ fill: "#F7FAFC" }}
@@ -482,8 +655,19 @@ export default function DashboardSupport() {
                       fontWeight: "bold",
                     }}
                   />
-                  <Bar dataKey="percentual" radius={[0, 8, 8, 0]}>
-                    {EQUIPE_METRICS.map((entry, index) => (
+                  <Bar
+                    dataKey="percentual"
+                    radius={[0, 8, 8, 0]}
+                    label={{
+                      position: "right",
+                      fill: "#FFFFFF",
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      offset: 5,
+                      formatter: (value: number) => `${value}%`,
+                    }}
+                  >
+                    {equipeOrdenada.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
@@ -678,7 +862,7 @@ export default function DashboardSupport() {
             </Box>
             <HStack gap={2}>
               <Badge colorScheme="green" variant="subtle">
-                {EQUIPE_METRICS.filter((t) => t.percentual >= 80).length} aptos
+                {equipeMetrics.filter((t) => t.percentual >= 80).length} aptos
               </Badge>
               {abaixoDaMeta > 0 && (
                 <Badge colorScheme="red" variant="subtle">
@@ -746,141 +930,136 @@ export default function DashboardSupport() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {EQUIPE_METRICS.sort((a, b) => b.percentual - a.percentual).map(
-                (row, index) => {
-                  const bonus = calcularBonus(row.percentual);
-                  const isEligible = row.percentual >= 80;
+              {equipeOrdenada.map((row, index) => {
+                const bonus = row.bonus;
+                const isEligible = row.atingiuMedia && row.percentual >= 80;
 
-                  return (
-                    <Table.Row
-                      key={index}
-                      bg={row.destaque ? "blue.50" : "white"}
-                      _hover={{ bg: row.destaque ? "blue.100" : "gray.50" }}
-                      transition="all 0.2s"
-                    >
-                      <Table.Cell>
-                        <HStack>
-                          <Text fontWeight={row.destaque ? "bold" : "medium"}>
-                            {row.name}
-                          </Text>
-                          {row.destaque && (
-                            <Badge
-                              colorScheme="blue"
-                              variant="solid"
-                              fontSize="xs"
-                            >
-                              Você
-                            </Badge>
-                          )}
-                        </HStack>
-                      </Table.Cell>
-                      <Table.Cell textAlign="center">
-                        <Badge
-                          colorScheme={row.turno === "A" ? "purple" : "cyan"}
-                          variant="subtle"
-                        >
-                          {row.turno}
-                        </Badge>
-                      </Table.Cell>
-                      <Table.Cell textAlign="center" fontWeight="medium">
-                        {row.atendimentos}
-                      </Table.Cell>
-                      <Table.Cell
-                        textAlign="center"
-                        fontWeight="medium"
-                        color="blue.600"
-                      >
-                        {row.pontuacao}
-                      </Table.Cell>
-                      <Table.Cell
-                        textAlign="center"
-                        color="gray.500"
-                        fontSize="sm"
-                      >
-                        {row.maxPossivel}
-                      </Table.Cell>
-                      <Table.Cell textAlign="center">
-                        <VStack gap={1}>
-                          <Badge
-                            colorScheme={
-                              row.percentual >= 90
-                                ? "green"
-                                : row.percentual >= 80
-                                  ? "blue"
-                                  : "red"
-                            }
-                            variant="solid"
-                            fontSize="sm"
-                            px={3}
-                            py={1}
-                          >
-                            {row.percentual}%
-                          </Badge>
-                          <Box
-                            w="60px"
-                            h="4px"
-                            bg="gray.200"
-                            borderRadius="full"
-                            overflow="hidden"
-                          >
-                            <Box
-                              h="100%"
-                              w={`${row.percentual}%`}
-                              bg={
-                                row.percentual >= 90
-                                  ? "green.500"
-                                  : row.percentual >= 80
-                                    ? "blue.500"
-                                    : "red.500"
-                              }
-                              borderRadius="full"
-                              transition="width 0.3s"
-                            />
-                          </Box>
-                        </VStack>
-                      </Table.Cell>
-                      <Table.Cell textAlign="center">
-                        {isEligible ? (
-                          <Box
-                            display="inline-flex"
-                            bg="green.50"
-                            p={2}
-                            borderRadius="lg"
-                          >
-                            <Icon
-                              as={CheckCircle2}
-                              color="green.600"
-                              boxSize={5}
-                            />
-                          </Box>
-                        ) : (
-                          <Box
-                            display="inline-flex"
-                            bg="red.50"
-                            p={2}
-                            borderRadius="lg"
-                          >
-                            <Icon
-                              as={AlertTriangle}
-                              color="red.600"
-                              boxSize={5}
-                            />
-                          </Box>
-                        )}
-                      </Table.Cell>
-                      <Table.Cell textAlign="end">
-                        <Text
-                          fontWeight="bold"
-                          fontSize="md"
-                          color={bonus > 0 ? "green.600" : "gray.400"}
-                        >
-                          R$ {bonus},00
+                return (
+                  <Table.Row
+                    key={index}
+                    bg={row.destaque ? "blue.50" : "white"}
+                    _hover={{ bg: row.destaque ? "blue.100" : "gray.50" }}
+                    transition="all 0.2s"
+                  >
+                    <Table.Cell>
+                      <HStack>
+                        <Text fontWeight={row.destaque ? "bold" : "medium"}>
+                          {row.name}
                         </Text>
-                      </Table.Cell>
-                    </Table.Row>
-                  );
-                },
-              )}
+                        {row.destaque && (
+                          <Badge
+                            colorScheme="blue"
+                            variant="solid"
+                            fontSize="xs"
+                          >
+                            Você
+                          </Badge>
+                        )}
+                      </HStack>
+                    </Table.Cell>
+                    <Table.Cell textAlign="center" fontWeight="medium">
+                      {row.turno}
+                    </Table.Cell>
+                    <Table.Cell textAlign="center" fontWeight="medium">
+                      {row.atendimentos.toLocaleString("pt-BR")}
+                    </Table.Cell>
+                    <Table.Cell
+                      textAlign="center"
+                      fontWeight="medium"
+                      color="blue.600"
+                    >
+                      {row.pontuacao}
+                    </Table.Cell>
+                    <Table.Cell
+                      textAlign="center"
+                      color="gray.500"
+                      fontSize="sm"
+                    >
+                      {row.maxPossivel}
+                    </Table.Cell>
+                    <Table.Cell textAlign="center">
+                      <VStack gap={1}>
+                        <Badge
+                          colorScheme={
+                            row.percentual >= 90
+                              ? "green"
+                              : row.percentual >= 80
+                                ? "blue"
+                                : "red"
+                          }
+                          variant="solid"
+                          fontSize="sm"
+                          px={3}
+                          py={1}
+                        >
+                          {row.percentual}%
+                        </Badge>
+                        <Box
+                          w="60px"
+                          h="4px"
+                          bg="gray.200"
+                          borderRadius="full"
+                          overflow="hidden"
+                        >
+                          <Box
+                            h="100%"
+                            w={`${row.percentual}%`}
+                            bg={
+                              row.percentual >= 90
+                                ? "green.500"
+                                : row.percentual >= 80
+                                  ? "blue.500"
+                                  : "red.500"
+                            }
+                            borderRadius="full"
+                            transition="width 0.3s"
+                          />
+                        </Box>
+                      </VStack>
+                    </Table.Cell>
+                    <Table.Cell textAlign="center">
+                      {isEligible ? (
+                        <Box
+                          display="inline-flex"
+                          bg="green.50"
+                          p={2}
+                          borderRadius="lg"
+                        >
+                          <Icon
+                            as={CheckCircle2}
+                            color="green.600"
+                            boxSize={5}
+                          />
+                        </Box>
+                      ) : (
+                        <Box
+                          display="inline-flex"
+                          bg="red.50"
+                          p={2}
+                          borderRadius="lg"
+                        >
+                          <Icon as={XCircle} color="red.600" boxSize={5} />
+                        </Box>
+                      )}
+                    </Table.Cell>
+                    <Table.Cell textAlign="end">
+                      {bonus > 0 ? (
+                        <Text fontWeight="bold" fontSize="md" color="green.600">
+                          R$ {bonus.toLocaleString("pt-BR")}
+                        </Text>
+                      ) : (
+                        <Text
+                          fontWeight="medium"
+                          fontSize="sm"
+                          color="gray.400"
+                        >
+                          —
+                        </Text>
+                      )}
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })}
             </Table.Body>
           </Table.Root>
 
@@ -910,7 +1089,7 @@ export default function DashboardSupport() {
                   MÉDIA EQUIPE
                 </Text>
                 <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                  {mediaEquipe}%
+                  {mediaEquipe}
                 </Text>
               </VStack>
             </HStack>

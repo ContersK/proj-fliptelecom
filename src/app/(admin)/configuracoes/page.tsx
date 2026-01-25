@@ -21,6 +21,7 @@ import {
   DollarSign,
   Shield,
   Database,
+  UserPlus,
 } from "lucide-react";
 import { FieldHelper } from "@/components/FieldHelper";
 import { SwitchField } from "@/components/SwitchField";
@@ -46,9 +47,53 @@ export default function ConfiguracoesPage() {
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState("30");
 
+  // Estados para criação de usuários
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPassword, setUserPassword] = useState("");
+  const [userRole, setUserRole] = useState("SUPERVISOR");
+  const [creatingUser, setCreatingUser] = useState(false);
+
   const handleSaveSettings = () => {
     // Aqui você implementaria a lógica para salvar as configurações
     alert("Configurações salvas com sucesso!");
+  };
+
+  const handleCreateUser = async () => {
+    if (!userName || !userEmail || !userPassword) {
+      alert("Preencha nome, email e senha.");
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      const res = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: userName,
+          email: userEmail,
+          password: userPassword,
+          role: userRole,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.message || "Erro ao criar usuário");
+      }
+
+      alert("Usuário criado com sucesso!");
+      setUserName("");
+      setUserEmail("");
+      setUserPassword("");
+      setUserRole("SUPERVISOR");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao criar usuário");
+    } finally {
+      setCreatingUser(false);
+    }
   };
 
   return (
@@ -339,6 +384,85 @@ export default function ConfiguracoesPage() {
                 />
               </FieldHelper>
             </Stack>
+          </Card.Body>
+        </Card.Root>
+
+        {/* Usuários de Acesso */}
+        <Card.Root bg="white" boxShadow="lg" borderRadius="xl">
+          <Card.Body p={6}>
+            <Flex align="center" gap={3} mb={6}>
+              <Box bg="blue.50" p={3} borderRadius="lg">
+                <Icon as={UserPlus} color="blue.600" boxSize={6} />
+              </Box>
+              <Box>
+                <Heading size="md" color="gray.700">
+                  Usuários de Acesso
+                </Heading>
+                <Text fontSize="sm" color="gray.500">
+                  Crie logins para acesso ao sistema
+                </Text>
+              </Box>
+            </Flex>
+
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
+              <FieldHelper label="Nome Completo">
+                <Input
+                  value={userName}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setUserName(e.target.value)
+                  }
+                  placeholder="Ex: Maria Silva"
+                />
+              </FieldHelper>
+
+              <FieldHelper label="Email de Acesso">
+                <Input
+                  type="email"
+                  value={userEmail}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setUserEmail(e.target.value)
+                  }
+                  placeholder="email@empresa.com"
+                />
+              </FieldHelper>
+
+              <FieldHelper label="Senha">
+                <Input
+                  type="password"
+                  value={userPassword}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setUserPassword(e.target.value)
+                  }
+                  placeholder="Digite uma senha"
+                />
+              </FieldHelper>
+
+              <FieldHelper label="Perfil de Acesso">
+                <select
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: "6px",
+                    border: "1px solid #E2E8F0",
+                  }}
+                  value={userRole}
+                  onChange={(e) => setUserRole(e.target.value)}
+                >
+                  <option value="SUPERVISOR">Supervisor</option>
+                  <option value="ADMIN">Administrador</option>
+                </select>
+              </FieldHelper>
+            </SimpleGrid>
+
+            <Flex justify="flex-end" mt={6}>
+              <Button
+                colorScheme="blue"
+                onClick={handleCreateUser}
+                loading={creatingUser}
+              >
+                Criar Usuário
+              </Button>
+            </Flex>
           </Card.Body>
         </Card.Root>
 

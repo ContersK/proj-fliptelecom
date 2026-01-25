@@ -1,5 +1,18 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+
+async function getManagedSetorId() {
+  const sessionToken = (await cookies()).get("session_token")?.value;
+  if (!sessionToken) return null;
+
+  const gerencia = await prisma.gerencia.findUnique({
+    where: { id: sessionToken },
+    include: { managedSetor: true },
+  });
+
+  return gerencia?.managedSetor?.id ?? null;
+}
 
 // LISTAR MÉTRICAS
 export async function GET(req: Request) {
@@ -8,6 +21,7 @@ export async function GET(req: Request) {
     const funcionarioId = searchParams.get("funcionarioId");
     const month = searchParams.get("month");
     const year = searchParams.get("year");
+    const setorId = await getManagedSetorId();
 
     const where: {
       funcionarioId?: string;
@@ -19,12 +33,27 @@ export async function GET(req: Request) {
     if (year) where.year = parseInt(year);
 
     const metricas = await prisma.metricasMensais.findMany({
-      where,
+      where: {
+        ...where,
+        ...(setorId
+          ? {
+              funcionario: {
+                setorId,
+              },
+            }
+          : {}),
+      },
       include: {
         funcionario: {
           select: {
             id: true,
             nome: true,
+            setor: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },

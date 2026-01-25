@@ -38,6 +38,9 @@ model Setor {
 
   // Relação: Regras de comissão
   commissionRules RegrasDeComissao[]
+  
+  // Rastreamento de períodos fechados (formato: "2026-01" para janeiro/2026)
+  periodosFechados String @default("") // JSON array stringificado ou CSV
 }
 
 model Funcionario {
@@ -69,6 +72,9 @@ model MetricasMensais {
 
   finalScore    Float?
   ValorComissao Float?
+  
+  // Status da comissão: PENDENTE (padrão), APROVADO ou REPROVADO
+  statusComissao String @default("PENDENTE") // "PENDENTE", "APROVADO", "REPROVADO"
 
   funcionarioId String
   funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])

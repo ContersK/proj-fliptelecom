@@ -250,7 +250,7 @@ export default function FuncionariosPage() {
           <Box position="relative" w="300px">
             <Input
               placeholder="Buscar por nome..."
-              pl={10}
+              ps={10}
               bg="gray.50"
               border="none"
               value={searchTerm}
@@ -262,6 +262,7 @@ export default function FuncionariosPage() {
               top="50%"
               transform="translateY(-50%)"
               color="gray.400"
+              pointerEvents="none"
             >
               <Search size={18} />
             </Box>

@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs"; // Importante para a senha
+
+async function getManagedSetorId() {
+  const sessionToken = (await cookies()).get("session_token")?.value;
+  if (!sessionToken) return null;
+
+  const gerencia = await prisma.gerencia.findUnique({
+    where: { id: sessionToken },
+    include: { managedSetor: true },
+  });
+
+  return gerencia?.managedSetor?.id ?? null;
+}
 
 // LISTAR TODOS
 export async function GET() {
   try {
+    const setorId = await getManagedSetorId();
     const funcionarios = await prisma.funcionario.findMany({
+      where: setorId ? { setorId } : undefined,
+      include: { setor: true },
       orderBy: { nome: "asc" },
     });
     return NextResponse.json(funcionarios);
@@ -26,9 +42,14 @@ export async function POST(req: Request) {
     // Separa a senha do resto dos dados
     const { password, ...funcionarioData } = data;
 
+    const setorId = await getManagedSetorId();
+
     // 1. Cria o Funcionário na tabela de métricas
     const novoFuncionario = await prisma.funcionario.create({
-      data: funcionarioData,
+      data: {
+        ...funcionarioData,
+        setorId: funcionarioData.setorId ?? setorId ?? undefined,
+      },
     });
 
     // 2. Se tiver senha, cria TAMBÉM o usuário de acesso (Gerencia)
