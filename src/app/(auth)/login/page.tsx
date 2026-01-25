@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -12,38 +12,38 @@ import {
   Flex,
   Icon,
   HStack,
-} from "@chakra-ui/react";
-import { MdLock, MdMail, MdArrowForward, MdCheckCircle } from "react-icons/md";
-import { useRouter } from "next/navigation";
+} from '@chakra-ui/react';
+import { MdLock, MdMail, MdArrowForward, MdCheckCircle } from 'react-icons/md';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ email: '', password: '' });
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const validateForm = () => {
-    const newErrors = { email: "", password: "" };
+    const newErrors = { email: '', password: '' };
     let isValid = true;
 
     if (!email) {
-      newErrors.email = "O email é obrigatório.";
+      newErrors.email = 'O email é obrigatório.';
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Formato de email inválido.";
+      newErrors.email = 'Formato de email inválido.';
       isValid = false;
     }
 
     if (!password) {
-      newErrors.password = "A senha é obrigatória.";
+      newErrors.password = 'A senha é obrigatória.';
       isValid = false;
     } else if (password.length < 6) {
-      newErrors.password = "Senha deve ter no mínimo 6 caracteres.";
+      newErrors.password = 'Senha deve ter no mínimo 6 caracteres.';
       isValid = false;
     }
 
@@ -60,35 +60,32 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log("Tentando login com:", { email, password: "***" });
+      console.log('Tentando login com:', { email, password: '***' });
 
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("Status da resposta:", res.status);
+      console.log('Status da resposta:', res.status);
 
       if (!res.ok) {
-        const data = await res
-          .json()
-          .catch(() => ({ message: "Erro desconhecido" }));
-        console.log("Erro da API:", data);
-        throw new Error(data.message ?? "Credenciais inválidas");
+        const data = await res.json().catch(() => ({ message: 'Erro desconhecido' }));
+        console.log('Erro da API:', data);
+        throw new Error(data.message ?? 'Credenciais inválidas');
       }
 
       const data = await res.json();
-      console.log("Login bem-sucedido:", data);
+      console.log('Login bem-sucedido:', data);
 
       setIsSuccess(true);
       setTimeout(() => {
-        router.replace("/");
+        router.replace('/');
       }, 1200);
     } catch (error) {
-      console.error("Erro no login:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Erro ao conectar ao servidor";
+      console.error('Erro no login:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao conectar ao servidor';
       setGeneralError(errorMessage);
     } finally {
       setLoading(false);
@@ -240,13 +237,7 @@ export default function LoginPage() {
         }
 
         .gradient-bg {
-          background: linear-gradient(
-            -45deg,
-            #667eea,
-            #764ba2,
-            #f093fb,
-            #4facfe
-          );
+          background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
           background-size: 400% 400%;
           animation: gradientMove 15s ease infinite;
         }
@@ -266,12 +257,12 @@ export default function LoginPage() {
         backgroundRepeat="no-repeat"
         _before={{
           content: '""',
-          position: "absolute",
+          position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          bg: "blackAlpha.500",
+          bg: 'blackAlpha.500',
           zIndex: 0,
         }}
       >
@@ -375,7 +366,7 @@ export default function LoginPage() {
                       <Icon
                         as={MdMail}
                         boxSize={5}
-                        color={errors.email ? "red.500" : "blue.500"}
+                        color={errors.email ? 'red.500' : 'blue.500'}
                         ml={3}
                       />
                     }
@@ -389,35 +380,32 @@ export default function LoginPage() {
                         const value = e.target.value;
                         setEmail(value);
                         setGeneralError(null);
-                        if (
-                          value &&
-                          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                        ) {
-                          setErrors({ ...errors, email: "Email inválido" });
+                        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                          setErrors({ ...errors, email: 'Email inválido' });
                         } else if (!value) {
                           setErrors({
                             ...errors,
-                            email: "Email é obrigatório",
+                            email: 'Email é obrigatório',
                           });
                         } else {
-                          setErrors({ ...errors, email: "" });
+                          setErrors({ ...errors, email: '' });
                         }
                       }}
                       size="lg"
                       bg="gray.50"
                       border="2px solid"
-                      borderColor={errors.email ? "red.300" : "gray.200"}
+                      borderColor={errors.email ? 'red.300' : 'gray.200'}
                       color="gray.800"
                       fontSize="md"
                       _hover={{
-                        borderColor: errors.email ? "red.400" : "blue.300",
+                        borderColor: errors.email ? 'red.400' : 'blue.300',
                       }}
                       _focus={{
-                        borderColor: errors.email ? "red.500" : "blue.500",
-                        bg: "white",
+                        borderColor: errors.email ? 'red.500' : 'blue.500',
+                        bg: 'white',
                         boxShadow: errors.email
-                          ? "0 0 0 3px rgba(229, 62, 62, 0.1)"
-                          : "0 0 0 3px rgba(66, 153, 225, 0.1)",
+                          ? '0 0 0 3px rgba(229, 62, 62, 0.1)'
+                          : '0 0 0 3px rgba(66, 153, 225, 0.1)',
                       }}
                       transition="all 0.2s"
                       autoComplete="username"
@@ -449,8 +437,8 @@ export default function LoginPage() {
                       fontWeight="semibold"
                       cursor="pointer"
                       _hover={{
-                        color: "blue.700",
-                        textDecoration: "underline",
+                        color: 'blue.700',
+                        textDecoration: 'underline',
                       }}
                       transition="all 0.2s"
                     >
@@ -463,7 +451,7 @@ export default function LoginPage() {
                       <Icon
                         as={MdLock}
                         boxSize={5}
-                        color={errors.password ? "red.500" : "blue.500"}
+                        color={errors.password ? 'red.500' : 'blue.500'}
                         ml={3}
                       />
                     }
@@ -480,32 +468,32 @@ export default function LoginPage() {
                         if (value && value.length < 6) {
                           setErrors({
                             ...errors,
-                            password: "Mínimo 6 caracteres",
+                            password: 'Mínimo 6 caracteres',
                           });
                         } else if (!value) {
                           setErrors({
                             ...errors,
-                            password: "Senha é obrigatória",
+                            password: 'Senha é obrigatória',
                           });
                         } else {
-                          setErrors({ ...errors, password: "" });
+                          setErrors({ ...errors, password: '' });
                         }
                       }}
                       size="lg"
                       bg="gray.50"
                       border="2px solid"
-                      borderColor={errors.password ? "red.300" : "gray.200"}
+                      borderColor={errors.password ? 'red.300' : 'gray.200'}
                       color="gray.800"
                       fontSize="md"
                       _hover={{
-                        borderColor: errors.password ? "red.400" : "blue.300",
+                        borderColor: errors.password ? 'red.400' : 'blue.300',
                       }}
                       _focus={{
-                        borderColor: errors.password ? "red.500" : "blue.500",
-                        bg: "white",
+                        borderColor: errors.password ? 'red.500' : 'blue.500',
+                        bg: 'white',
                         boxShadow: errors.password
-                          ? "0 0 0 3px rgba(229, 62, 62, 0.1)"
-                          : "0 0 0 3px rgba(66, 153, 225, 0.1)",
+                          ? '0 0 0 3px rgba(229, 62, 62, 0.1)'
+                          : '0 0 0 3px rgba(66, 153, 225, 0.1)',
                       }}
                       transition="all 0.2s"
                       autoComplete="current-password"
@@ -540,11 +528,11 @@ export default function LoginPage() {
                 position="relative"
                 overflow="hidden"
                 _hover={{
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 10px 30px rgba(102, 126, 234, 0.4)",
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 10px 30px rgba(102, 126, 234, 0.4)',
                 }}
                 _active={{
-                  transform: "translateY(0)",
+                  transform: 'translateY(0)',
                 }}
                 transition="all 0.3s"
                 mt={2}
@@ -576,15 +564,15 @@ export default function LoginPage() {
                   © 2026 Flip Telecom. Todos os direitos reservados.
                 </Text>
                 <HStack gap={4} fontSize="xs" color="gray.500">
-                  <Text cursor="pointer" _hover={{ color: "blue.600" }}>
+                  <Text cursor="pointer" _hover={{ color: 'blue.600' }}>
                     Termos de Uso
                   </Text>
                   <Text>•</Text>
-                  <Text cursor="pointer" _hover={{ color: "blue.600" }}>
+                  <Text cursor="pointer" _hover={{ color: 'blue.600' }}>
                     Privacidade
                   </Text>
                   <Text>•</Text>
-                  <Text cursor="pointer" _hover={{ color: "blue.600" }}>
+                  <Text cursor="pointer" _hover={{ color: 'blue.600' }}>
                     Suporte
                   </Text>
                 </HStack>

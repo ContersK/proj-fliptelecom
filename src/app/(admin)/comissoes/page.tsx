@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo, type ChangeEvent } from "react";
+import React, { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import {
   Box,
   Button,
@@ -16,7 +16,7 @@ import {
   VStack,
   Badge,
   Card,
-} from "@chakra-ui/react";
+} from '@chakra-ui/react';
 import {
   Download,
   Filter,
@@ -27,7 +27,7 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+} from 'lucide-react';
 
 type ComissaoRow = {
   id: string;
@@ -39,23 +39,23 @@ type ComissaoRow = {
   maxPossivel: number;
   percentual: number;
   bonus: number;
-  status: "PENDENTE" | "APROVADO" | "REPROVADO";
+  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
   mediaMinima: number;
 };
 
 const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ];
 
 function calcularBonus(percentual: number) {
@@ -70,25 +70,25 @@ function calcularBonus(percentual: number) {
 export default function ComissoesPage() {
   const currentDate = new Date();
   const [referenceMonth, setReferenceMonth] = useState(() => {
-    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
     return `${currentDate.getFullYear()}-${month}`;
   });
   const [comissaoData, setComissaoData] = useState<ComissaoRow[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [setorFilter, setSetorFilter] = useState("todos");
-  const [turnoFilter, setTurnoFilter] = useState("todos");
-  const [statusFilter, setStatusFilter] = useState("todos");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [setorFilter, setSetorFilter] = useState('todos');
+  const [turnoFilter, setTurnoFilter] = useState('todos');
+  const [statusFilter, setStatusFilter] = useState('todos');
   const [closingPeriod, setClosingPeriod] = useState(false);
   const [userSetorId, setUserSetorId] = useState<string | null>(null);
 
   const { month, year, referenceLabel } = useMemo(() => {
-    const [y, m] = referenceMonth.split("-").map(Number);
+    const [y, m] = referenceMonth.split('-').map(Number);
     const safeMonth = Number.isFinite(m) ? m : new Date().getMonth() + 1;
     const safeYear = Number.isFinite(y) ? y : new Date().getFullYear();
     return {
       month: safeMonth,
       year: safeYear,
-      referenceLabel: `${MESES[safeMonth - 1] ?? "Mês"}/${safeYear}`,
+      referenceLabel: `${MESES[safeMonth - 1] ?? 'Mês'}/${safeYear}`,
     };
   }, [referenceMonth]);
 
@@ -98,7 +98,7 @@ export default function ComissoesPage() {
     async function fetchComissoes() {
       try {
         // Busca dados de funcionários com filtro por mês/ano
-        const funcionariosRes = await fetch("/api/funcionarios");
+        const funcionariosRes = await fetch('/api/funcionarios');
         const funcionarios = (await funcionariosRes.json()) as Array<{
           id: string;
           nome?: string;
@@ -109,9 +109,7 @@ export default function ComissoesPage() {
         }>;
 
         // Busca dados de métricas com filtro por mês/ano
-        const metricasRes = await fetch(
-          `/api/metricas?month=${month}&year=${year}`,
-        );
+        const metricasRes = await fetch(`/api/metricas?month=${month}&year=${year}`);
         const metricasData = (await metricasRes.json()) as Array<{
           funcionarioId: string;
           countNota5?: number;
@@ -136,7 +134,7 @@ export default function ComissoesPage() {
             func?.setor?.nome ||
             func?.setor?.name ||
             func?.cargo ||
-            "Sem Classificação";
+            'Sem Classificação';
           if (!atendimenrosPorSetor.has(setorNome)) {
             atendimenrosPorSetor.set(setorNome, []);
           }
@@ -145,26 +143,21 @@ export default function ComissoesPage() {
           const countNota3 = metrica.countNota3 || 0;
           const countNota2 = metrica.countNota2 || 0;
           const countNota1 = metrica.countNota1 || 0;
-          const atendimentos =
-            countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+          const atendimentos = countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
           atendimenrosPorSetor.get(setorNome)!.push(atendimentos);
         });
 
         // Calcular médias por setor (arredondadas para baixo)
         const mediaAtendimentosPorSetor = new Map<string, number>();
         atendimenrosPorSetor.forEach((valores, setor) => {
-          const media = Math.floor(
-            valores.reduce((a, b) => a + b, 0) / valores.length || 0,
-          );
+          const media = Math.floor(valores.reduce((a, b) => a + b, 0) / valores.length || 0);
           mediaAtendimentosPorSetor.set(setor, media);
         });
 
         // Mapear dados para formato de comissão
         const rows: ComissaoRow[] = metricasData
           .map((metrica) => {
-            const func = funcionarios.find(
-              (f) => f.id === metrica.funcionarioId,
-            );
+            const func = funcionarios.find((f) => f.id === metrica.funcionarioId);
             if (!func) return null;
 
             // Calcular atendimentos e pontuação
@@ -173,17 +166,11 @@ export default function ComissoesPage() {
             const countNota3 = metrica.countNota3 || 0;
             const countNota2 = metrica.countNota2 || 0;
             const countNota1 = metrica.countNota1 || 0;
-            const atendimentos =
-              countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+            const atendimentos = countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
             const pontuacao =
-              countNota5 * 5 +
-              countNota4 * 4 +
-              countNota3 * 3 +
-              countNota2 * 2 +
-              countNota1 * 1;
+              countNota5 * 5 + countNota4 * 4 + countNota3 * 3 + countNota2 * 2 + countNota1 * 1;
             const maxPossivel = atendimentos * 5;
-            const percentual =
-              maxPossivel > 0 ? Math.round((pontuacao / maxPossivel) * 100) : 0;
+            const percentual = maxPossivel > 0 ? Math.round((pontuacao / maxPossivel) * 100) : 0;
 
             // Obter setor nome (prioriza setor real, depois cargo como fallback)
             const setorNome =
@@ -191,7 +178,7 @@ export default function ComissoesPage() {
               func.setor?.nome ||
               func.setor?.name ||
               func.cargo ||
-              "Sem Classificação";
+              'Sem Classificação';
 
             // Obter média mínima do setor
             const mediaSetor = mediaAtendimentosPorSetor.get(setorNome) || 0;
@@ -201,20 +188,20 @@ export default function ComissoesPage() {
             const atendeMinimo = atendimentos >= mediaSetor && mediaSetor > 0;
 
             // Calcular status e bônus
-            let status: "PENDENTE" | "APROVADO" | "REPROVADO" = "REPROVADO";
+            let status: 'PENDENTE' | 'APROVADO' | 'REPROVADO' = 'REPROVADO';
             let bonus = 0;
 
             if (atendeMinimo) {
               // Se atingiu a média de atendimentos, está aprovado (mas pendente de fechamento)
-              status = "PENDENTE";
+              status = 'PENDENTE';
               bonus = calcularBonus(percentual);
             }
 
             return {
               id: func.id,
-              name: func.nome || func.name || "N/A",
+              name: func.nome || func.name || 'N/A',
               setor: setorNome,
-              turno: func.turno || "A",
+              turno: func.turno || 'A',
               atendimentos,
               pontuacao,
               maxPossivel,
@@ -232,7 +219,7 @@ export default function ComissoesPage() {
       } catch (fetchError) {
         console.error(fetchError);
         if (isMounted) {
-          console.error("Não foi possível carregar os dados de comissões.");
+          console.error('Não foi possível carregar os dados de comissões.');
         }
       }
     }
@@ -248,13 +235,13 @@ export default function ComissoesPage() {
   useEffect(() => {
     async function fetchUserSetor() {
       try {
-        const res = await fetch("/api/usuarios/me");
+        const res = await fetch('/api/usuarios/me');
         if (res.ok) {
           const user = await res.json();
           setUserSetorId(user.setor?.id || null);
         }
       } catch (err) {
-        console.error("Erro ao buscar setor do usuário:", err);
+        console.error('Erro ao buscar setor do usuário:', err);
       }
     }
     fetchUserSetor();
@@ -263,7 +250,7 @@ export default function ComissoesPage() {
   // Função para fechar o período
   const handleClosePeriod = async () => {
     if (!userSetorId) {
-      alert("Erro: Setor do supervisor não encontrado");
+      alert('Erro: Setor do supervisor não encontrado');
       return;
     }
 
@@ -277,9 +264,9 @@ export default function ComissoesPage() {
 
     setClosingPeriod(true);
     try {
-      const res = await fetch("/api/comissoes/fechar-periodo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/comissoes/fechar-periodo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           month,
           year,
@@ -289,20 +276,16 @@ export default function ComissoesPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Erro ao fechar período");
+        throw new Error(errorData.error || 'Erro ao fechar período');
       }
 
       const data = await res.json();
-      alert(
-        `Período fechado com sucesso!\nMédia de atendimentos: ${data.mediaAtendimentos}`,
-      );
+      alert(`Período fechado com sucesso!\nMédia de atendimentos: ${data.mediaAtendimentos}`);
 
       // Recarregar dados para refletir as mudanças
       window.location.reload();
     } catch (err) {
-      alert(
-        `Erro ao fechar período: ${err instanceof Error ? err.message : "Erro desconhecido"}`,
-      );
+      alert(`Erro ao fechar período: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
       console.error(err);
     } finally {
       setClosingPeriod(false);
@@ -311,7 +294,7 @@ export default function ComissoesPage() {
 
   // Navegar entre meses
   const handlePreviousMonth = () => {
-    const [y, m] = referenceMonth.split("-").map(Number);
+    const [y, m] = referenceMonth.split('-').map(Number);
     let newMonth = m - 1;
     let newYear = y;
 
@@ -320,11 +303,11 @@ export default function ComissoesPage() {
       newYear -= 1;
     }
 
-    setReferenceMonth(`${newYear}-${String(newMonth).padStart(2, "0")}`);
+    setReferenceMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
   };
 
   const handleNextMonth = () => {
-    const [y, m] = referenceMonth.split("-").map(Number);
+    const [y, m] = referenceMonth.split('-').map(Number);
     let newMonth = m + 1;
     let newYear = y;
 
@@ -333,38 +316,31 @@ export default function ComissoesPage() {
       newYear += 1;
     }
 
-    setReferenceMonth(`${newYear}-${String(newMonth).padStart(2, "0")}`);
+    setReferenceMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
   };
 
   // Filtrar dados
   const filteredData = comissaoData.filter((item) => {
-    const matchSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchSetor = setorFilter === "todos" || item.setor === setorFilter;
-    const matchTurno = turnoFilter === "todos" || item.turno === turnoFilter;
+    const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSetor = setorFilter === 'todos' || item.setor === setorFilter;
+    const matchTurno = turnoFilter === 'todos' || item.turno === turnoFilter;
     const matchStatus =
-      statusFilter === "todos" ||
-      (statusFilter === "aprovado" && item.status === "APROVADO") ||
-      (statusFilter === "reprovado" && item.status === "REPROVADO") ||
-      (statusFilter === "pendente" && item.status === "PENDENTE");
+      statusFilter === 'todos' ||
+      (statusFilter === 'aprovado' && item.status === 'APROVADO') ||
+      (statusFilter === 'reprovado' && item.status === 'REPROVADO') ||
+      (statusFilter === 'pendente' && item.status === 'PENDENTE');
     return matchSearch && matchSetor && matchTurno && matchStatus;
   });
 
   // Cálculos
   const totalPagar = filteredData.reduce((acc, curr) => acc + curr.bonus, 0);
-  const aprovados = filteredData.filter((i) => i.status === "APROVADO").length;
+  const aprovados = filteredData.filter((i) => i.status === 'APROVADO').length;
   const mediaPercentual = Math.round(
-    filteredData.reduce((acc, curr) => acc + curr.percentual, 0) /
-      (filteredData.length || 1),
+    filteredData.reduce((acc, curr) => acc + curr.percentual, 0) / (filteredData.length || 1),
   );
 
-  const setores = Array.from(
-    new Set(comissaoData.map((item) => item.setor)),
-  ).filter(Boolean);
-  const turnos = Array.from(
-    new Set(comissaoData.map((item) => item.turno)),
-  ).filter(Boolean);
+  const setores = Array.from(new Set(comissaoData.map((item) => item.setor))).filter(Boolean);
+  const turnos = Array.from(new Set(comissaoData.map((item) => item.turno))).filter(Boolean);
 
   return (
     <Box>
@@ -391,7 +367,7 @@ export default function ComissoesPage() {
               disabled={closingPeriod}
             >
               <Icon as={Calendar} boxSize={4} mr={2} />
-              {closingPeriod ? "Fechando..." : "Fechar Período"}
+              {closingPeriod ? 'Fechando...' : 'Fechar Período'}
             </Button>
           </HStack>
         </Flex>
@@ -404,12 +380,9 @@ export default function ComissoesPage() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
@@ -433,12 +406,9 @@ export default function ComissoesPage() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #4299e1 0%, #3182ce 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #4299e1 0%, #3182ce 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
@@ -462,12 +432,9 @@ export default function ComissoesPage() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #9f7aea 0%, #805ad5 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #9f7aea 0%, #805ad5 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
@@ -491,12 +458,9 @@ export default function ComissoesPage() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #ed8936 0%, #dd6b20 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #ed8936 0%, #dd6b20 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
@@ -519,12 +483,7 @@ export default function ComissoesPage() {
         <Card.Root bg="white" boxShadow="lg" borderRadius="xl">
           <Card.Body p={6}>
             <Flex align="center" justify="space-between" gap={4}>
-              <Button
-                onClick={handlePreviousMonth}
-                variant="ghost"
-                colorScheme="blue"
-                size="lg"
-              >
+              <Button onClick={handlePreviousMonth} variant="ghost" colorScheme="blue" size="lg">
                 <Icon as={ChevronLeft} boxSize={5} />
               </Button>
 
@@ -535,12 +494,7 @@ export default function ComissoesPage() {
                 </Heading>
               </Flex>
 
-              <Button
-                onClick={handleNextMonth}
-                variant="ghost"
-                colorScheme="blue"
-                size="lg"
-              >
+              <Button onClick={handleNextMonth} variant="ghost" colorScheme="blue" size="lg">
                 <Icon as={ChevronRight} boxSize={5} />
               </Button>
             </Flex>
@@ -576,12 +530,7 @@ export default function ComissoesPage() {
                   bg="gray.50"
                   pl={10}
                 />
-                <Box
-                  position="absolute"
-                  left={3}
-                  top="50%"
-                  transform="translateY(-50%)"
-                >
+                <Box position="absolute" left={3} top="50%" transform="translateY(-50%)">
                   <Icon as={Search} color="gray.400" boxSize={4} />
                 </Box>
               </Box>
@@ -593,9 +542,7 @@ export default function ComissoesPage() {
               </Text>
               <chakra.select
                 value={setorFilter}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                  setSetorFilter(e.target.value)
-                }
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSetorFilter(e.target.value)}
                 bg="gray.50"
                 p={2}
                 borderRadius="md"
@@ -616,9 +563,7 @@ export default function ComissoesPage() {
               </Text>
               <chakra.select
                 value={turnoFilter}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                  setTurnoFilter(e.target.value)
-                }
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setTurnoFilter(e.target.value)}
                 bg="gray.50"
                 p={2}
                 borderRadius="md"
@@ -639,9 +584,7 @@ export default function ComissoesPage() {
               </Text>
               <chakra.select
                 value={statusFilter}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                  setStatusFilter(e.target.value)
-                }
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
                 bg="gray.50"
                 p={2}
                 borderRadius="md"
@@ -678,9 +621,7 @@ export default function ComissoesPage() {
             <Table.Root size="sm">
               <Table.Header>
                 <Table.Row bg="gray.50">
-                  <Table.ColumnHeader fontWeight="bold">
-                    Funcionário
-                  </Table.ColumnHeader>
+                  <Table.ColumnHeader fontWeight="bold">Funcionário</Table.ColumnHeader>
                   <Table.ColumnHeader textAlign="center" fontWeight="bold">
                     Setor/Turno
                   </Table.ColumnHeader>
@@ -706,11 +647,7 @@ export default function ComissoesPage() {
               </Table.Header>
               <Table.Body>
                 {filteredData.map((item) => (
-                  <Table.Row
-                    key={item.id}
-                    _hover={{ bg: "gray.50" }}
-                    transition="all 0.2s"
-                  >
+                  <Table.Row key={item.id} _hover={{ bg: 'gray.50' }} transition="all 0.2s">
                     <Table.Cell>
                       <Text fontWeight="medium">{item.name}</Text>
                     </Table.Cell>
@@ -718,7 +655,7 @@ export default function ComissoesPage() {
                       <VStack gap={1}>
                         <Text fontSize="sm">{item.setor}</Text>
                         <Badge
-                          colorScheme={item.turno === "A" ? "purple" : "cyan"}
+                          colorScheme={item.turno === 'A' ? 'purple' : 'cyan'}
                           variant="subtle"
                           fontSize="xs"
                         >
@@ -728,14 +665,10 @@ export default function ComissoesPage() {
                     </Table.Cell>
                     <Table.Cell textAlign="center">
                       <Text fontSize="sm" fontWeight="medium">
-                        {item.atendimentos.toLocaleString("pt-BR")}
+                        {item.atendimentos.toLocaleString('pt-BR')}
                       </Text>
                     </Table.Cell>
-                    <Table.Cell
-                      textAlign="center"
-                      fontWeight="bold"
-                      color="blue.600"
-                    >
+                    <Table.Cell textAlign="center" fontWeight="bold" color="blue.600">
                       {item.pontuacao}
                     </Table.Cell>
                     <Table.Cell textAlign="center" color="gray.500">
@@ -744,11 +677,7 @@ export default function ComissoesPage() {
                     <Table.Cell textAlign="center">
                       <Badge
                         colorScheme={
-                          item.percentual >= 90
-                            ? "green"
-                            : item.percentual >= 80
-                              ? "blue"
-                              : "red"
+                          item.percentual >= 90 ? 'green' : item.percentual >= 80 ? 'blue' : 'red'
                         }
                         variant="solid"
                         fontSize="sm"
@@ -761,29 +690,26 @@ export default function ComissoesPage() {
                     <Table.Cell textAlign="center">
                       <Badge
                         colorScheme={
-                          item.status === "APROVADO"
-                            ? "green"
-                            : item.status === "PENDENTE"
-                              ? "yellow"
-                              : "red"
+                          item.status === 'APROVADO'
+                            ? 'green'
+                            : item.status === 'PENDENTE'
+                              ? 'yellow'
+                              : 'red'
                         }
                         variant="subtle"
                         px={3}
                         py={1}
                       >
-                        {item.status === "APROVADO"
-                          ? "Aprovado"
-                          : item.status === "PENDENTE"
-                            ? "Pendente"
-                            : "Reprovado"}
+                        {item.status === 'APROVADO'
+                          ? 'Aprovado'
+                          : item.status === 'PENDENTE'
+                            ? 'Pendente'
+                            : 'Reprovado'}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell textAlign="end">
-                      <Text
-                        fontWeight="bold"
-                        color={item.bonus > 0 ? "green.600" : "gray.400"}
-                      >
-                        R$ {item.bonus.toLocaleString("pt-BR")}
+                      <Text fontWeight="bold" color={item.bonus > 0 ? 'green.600' : 'gray.400'}>
+                        R$ {item.bonus.toLocaleString('pt-BR')}
                       </Text>
                     </Table.Cell>
                   </Table.Row>

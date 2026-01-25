@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { hash } from "bcryptjs";
-import "dotenv/config";
+import { PrismaClient } from '@prisma/client';
+import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { hash } from 'bcryptjs';
+import 'dotenv/config';
 
 // Correção: Inicialização direta do adaptador com a configuração
 const adapter = new PrismaLibSql({
@@ -12,22 +12,22 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 [SEED] Iniciando...");
-  const passwordHash = await hash("1871Flip2@@@*", 10);
+  console.log('🌱 [SEED] Iniciando...');
+  const passwordHash = await hash('1871Flip2@@@*', 10);
 
   // Criar Admin
   await prisma.gerencia.upsert({
-    where: { email: "admin@fliptelecom.com.br" },
+    where: { email: 'admin@fliptelecom.com.br' },
     update: {},
     create: {
-      email: "admin@fliptelecom.com.br",
-      name: "Super Admin",
+      email: 'admin@fliptelecom.com.br',
+      name: 'Super Admin',
       password: passwordHash,
-      role: "ADMIN",
+      role: 'ADMIN',
     },
   });
 
-  console.log("✅ Seed finalizado!");
+  console.log('✅ Seed finalizado!');
 }
 
 main()

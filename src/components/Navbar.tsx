@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Box,
@@ -12,22 +12,22 @@ import {
   Avatar,
   Badge,
   VStack,
-} from "@chakra-ui/react";
-import { Bell, User, LogOut, Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+} from '@chakra-ui/react';
+import { Bell, User, LogOut, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const NOTIFICATIONS = [
   {
     id: 1,
-    title: "Fechamento de Comissão",
-    msg: "Ocorre dia 25/01.",
-    type: "warning",
+    title: 'Fechamento de Comissão',
+    msg: 'Ocorre dia 25/01.',
+    type: 'warning',
   },
   {
     id: 2,
-    title: "Novo Funcionário",
-    msg: "Roberto Silva adicionado.",
-    type: "info",
+    title: 'Novo Funcionário',
+    msg: 'Roberto Silva adicionado.',
+    type: 'info',
   },
 ];
 
@@ -35,9 +35,9 @@ export function Navbar() {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/logout", { method: "POST" });
+    await fetch('/api/logout', { method: 'POST' });
     router.refresh();
-    router.push("/login");
+    router.push('/login');
   }
 
   return (
@@ -59,14 +59,10 @@ export function Navbar() {
 
         <HStack gap={6}>
           {/* --- NOTIFICAÇÕES (POPOVER v3) --- */}
-          <Popover.Root positioning={{ placement: "bottom-end" }}>
+          <Popover.Root positioning={{ placement: 'bottom-end' }}>
             <Popover.Trigger asChild>
               <Box position="relative" cursor="pointer">
-                <IconButton
-                  aria-label="Notificações"
-                  variant="ghost"
-                  color="gray.500"
-                >
+                <IconButton aria-label="Notificações" variant="ghost" color="gray.500">
                   <Bell size={20} />
                 </IconButton>
                 <Badge
@@ -83,20 +79,10 @@ export function Navbar() {
               </Box>
             </Popover.Trigger>
 
-            <Popover.Content
-              width="320px"
-              bg="white"
-              boxShadow="xl"
-              borderRadius="lg"
-            >
+            <Popover.Content width="320px" bg="white" boxShadow="xl" borderRadius="lg">
               <Popover.Arrow />
               <Popover.Body p={0}>
-                <Box
-                  p={3}
-                  borderBottom="1px solid"
-                  borderColor="gray.100"
-                  bg="gray.50"
-                >
+                <Box p={3} borderBottom="1px solid" borderColor="gray.100" bg="gray.50">
                   <Text fontWeight="bold" fontSize="sm">
                     Notificações
                   </Text>
@@ -108,14 +94,12 @@ export function Navbar() {
                       p={3}
                       borderBottom="1px solid"
                       borderColor="gray.50"
-                      _hover={{ bg: "blue.50" }}
+                      _hover={{ bg: 'blue.50' }}
                     >
                       <Text
                         fontSize="xs"
                         fontWeight="bold"
-                        color={
-                          note.type === "warning" ? "orange.600" : "blue.600"
-                        }
+                        color={note.type === 'warning' ? 'orange.600' : 'blue.600'}
                       >
                         {note.title}
                       </Text>
@@ -130,14 +114,10 @@ export function Navbar() {
           </Popover.Root>
 
           {/* --- PERFIL (MENU v3) --- */}
-          <Menu.Root positioning={{ placement: "bottom-end" }}>
+          <Menu.Root positioning={{ placement: 'bottom-end' }}>
             <Menu.Trigger asChild>
               <HStack gap={3} cursor="pointer" _hover={{ opacity: 0.8 }}>
-                <VStack
-                  gap={0}
-                  align="end"
-                  display={{ base: "none", md: "flex" }}
-                >
+                <VStack gap={0} align="end" display={{ base: 'none', md: 'flex' }}>
                   <Text fontSize="sm" fontWeight="bold" color="gray.700">
                     Luan G.
                   </Text>
@@ -153,29 +133,14 @@ export function Navbar() {
               </HStack>
             </Menu.Trigger>
 
-            <Menu.Content
-              minW="180px"
-              bg="white"
-              borderRadius="md"
-              boxShadow="lg"
-            >
-              <Menu.Item
-                value="profile"
-                cursor="pointer"
-                _hover={{ bg: "gray.100" }}
-                p={2}
-              >
+            <Menu.Content minW="180px" bg="white" borderRadius="md" boxShadow="lg">
+              <Menu.Item value="profile" cursor="pointer" _hover={{ bg: 'gray.100' }} p={2}>
                 <HStack>
                   <User size={16} />
                   <Text>Meu Perfil</Text>
                 </HStack>
               </Menu.Item>
-              <Menu.Item
-                value="settings"
-                cursor="pointer"
-                _hover={{ bg: "gray.100" }}
-                p={2}
-              >
+              <Menu.Item value="settings" cursor="pointer" _hover={{ bg: 'gray.100' }} p={2}>
                 <HStack>
                   <Settings size={16} />
                   <Text>Configurações</Text>
@@ -186,7 +151,7 @@ export function Navbar() {
                 value="logout"
                 color="red.600"
                 cursor="pointer"
-                _hover={{ bg: "red.50" }}
+                _hover={{ bg: 'red.50' }}
                 onClick={handleLogout}
                 p={2}
               >

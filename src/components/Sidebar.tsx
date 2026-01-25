@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Box,
@@ -11,7 +11,7 @@ import {
   Spacer,
   IconButton,
   Tooltip,
-} from "@chakra-ui/react";
+} from '@chakra-ui/react';
 import {
   LayoutDashboard,
   Users,
@@ -19,16 +19,16 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { useState } from "react";
+} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useState } from 'react';
 
 const MENU_ITEMS = [
-  { name: "Principal", icon: LayoutDashboard, path: "/" },
-  { name: "Comissões", icon: FileText, path: "/comissoes" },
-  { name: "Funcionários", icon: Users, path: "/funcionarios" },
-  { name: "Configurações", icon: Settings, path: "/configuracoes" },
+  { name: 'Principal', icon: LayoutDashboard, path: '/' },
+  { name: 'Comissões', icon: FileText, path: '/comissoes' },
+  { name: 'Funcionários', icon: Users, path: '/funcionarios' },
+  { name: 'Configurações', icon: Settings, path: '/configuracoes' },
 ];
 
 interface SidebarProps {
@@ -48,7 +48,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
   return (
     <Box
       as="aside"
-      w={collapsed ? "80px" : "280px"}
+      w={collapsed ? '80px' : '280px'}
       h="100vh"
       bg="#0044CC"
       color="white"
@@ -58,7 +58,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
       zIndex={100}
       transition="width 0.3s ease"
       borderRight="1px solid rgba(255,255,255,0.1)"
-      display={{ base: "none", md: "block" }}
+      display={{ base: 'none', md: 'block' }}
     >
       <VStack h="full" align="stretch" gap={0}>
         {/* CABEÇALHO */}
@@ -74,7 +74,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
             src="/logo-flip.png"
             alt="Flip Telecom"
             // Se recolhido: altura 30px (menor). Se aberto: altura 50px (maior)
-            h={collapsed ? "30px" : "50px"}
+            h={collapsed ? '30px' : '50px'}
             w="auto"
             objectFit="contain"
             transition="height 0.3s ease" // Animação suave ao trocar de tamanho
@@ -91,7 +91,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
             bg="blue.500"
             color="white"
             shadow="md"
-            _hover={{ bg: "blue.600" }}
+            _hover={{ bg: 'blue.600' }}
           >
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </IconButton>
@@ -111,14 +111,14 @@ export function Sidebar({ onToggle }: SidebarProps) {
             const LinkContent = (
               <HStack
                 px={collapsed ? 0 : 4}
-                justify={collapsed ? "center" : "flex-start"}
+                justify={collapsed ? 'center' : 'flex-start'}
                 h="48px"
                 borderRadius="lg"
                 cursor="pointer"
                 transition="all 0.2s"
-                bg={isActive ? "white" : "transparent"}
-                color={isActive ? "#0044CC" : "white"}
-                _hover={{ bg: isActive ? "white" : "rgba(255,255,255,0.1)" }}
+                bg={isActive ? 'white' : 'transparent'}
+                color={isActive ? '#0044CC' : 'white'}
+                _hover={{ bg: isActive ? 'white' : 'rgba(255,255,255,0.1)' }}
                 position="relative"
                 w="full"
               >
@@ -142,7 +142,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
               <Link
                 href={item.path}
                 key={item.path}
-                style={{ textDecoration: "none", width: "100%" }}
+                style={{ textDecoration: 'none', width: '100%' }}
               >
                 {collapsed ? (
                   <Tooltip.Root>

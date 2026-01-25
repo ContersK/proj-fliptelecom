@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
 
     if (!month || !year || !setorId) {
       return NextResponse.json(
-        { error: "Faltam parâmetros: month, year, setorId" },
+        { error: 'Faltam parâmetros: month, year, setorId' },
         { status: 400 },
       );
     }
@@ -18,14 +18,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!setor) {
-      return NextResponse.json(
-        { error: "Setor não encontrado" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Setor não encontrado' }, { status: 404 });
     }
 
     // Formato do período
-    const periodKey = `${year}-${String(month).padStart(2, "0")}`;
+    const periodKey = `${year}-${String(month).padStart(2, '0')}`;
 
     // Buscar todas as métricas do setor para o período
     const metricas = await prisma.metricasMensais.findMany({
@@ -43,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (metricas.length === 0) {
       return NextResponse.json(
-        { error: "Nenhuma métrica encontrada para este período" },
+        { error: 'Nenhuma métrica encontrada para este período' },
         { status: 404 },
       );
     }
@@ -72,8 +69,7 @@ export async function POST(request: NextRequest) {
           (metric.countNota1 || 0);
 
         // Verificar se atingiu a média mínima de atendimentos
-        const status =
-          atendimentos >= mediaAtendimentos ? "APROVADO" : "REPROVADO";
+        const status = atendimentos >= mediaAtendimentos ? 'APROVADO' : 'REPROVADO';
 
         return prisma.metricasMensais.update({
           where: { id: metric.id },
@@ -88,13 +84,12 @@ export async function POST(request: NextRequest) {
     // Parse dos períodos fechados se existirem
     if (
       setor &&
-      "periodosFechados" in setor &&
-      typeof (setor as Record<string, unknown>).periodosFechados === "string"
+      'periodosFechados' in setor &&
+      typeof (setor as Record<string, unknown>).periodosFechados === 'string'
     ) {
-      const existing = (setor as Record<string, unknown>)
-        .periodosFechados as string;
+      const existing = (setor as Record<string, unknown>).periodosFechados as string;
       if (existing) {
-        periodosFechados.push(...existing.split(","));
+        periodosFechados.push(...existing.split(','));
       }
     }
 
@@ -105,21 +100,18 @@ export async function POST(request: NextRequest) {
     await prisma.setor.update({
       where: { id: setorId },
       data: {
-        periodosFechados: periodosFechados.join(","),
+        periodosFechados: periodosFechados.join(','),
       } as Record<string, unknown>,
     });
 
     return NextResponse.json({
-      message: "Período fechado com sucesso",
+      message: 'Período fechado com sucesso',
       period: periodKey,
       mediaAtendimentos,
       updatedCount: updatedMetricas.length,
     });
   } catch (error) {
-    console.error("Erro ao fechar período:", error);
-    return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 },
-    );
+    console.error('Erro ao fechar período:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

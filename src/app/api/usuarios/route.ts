@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { hash } from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -8,17 +8,14 @@ export async function POST(req: Request) {
 
     if (!name || !email || !password) {
       return NextResponse.json(
-        { message: "Nome, email e senha são obrigatórios" },
+        { message: 'Nome, email e senha são obrigatórios' },
         { status: 400 },
       );
     }
 
     const existing = await prisma.gerencia.findUnique({ where: { email } });
     if (existing) {
-      return NextResponse.json(
-        { message: "Já existe um usuário com este email" },
-        { status: 409 },
-      );
+      return NextResponse.json({ message: 'Já existe um usuário com este email' }, { status: 409 });
     }
 
     const passwordHash = await hash(password, 10);
@@ -28,19 +25,13 @@ export async function POST(req: Request) {
         name,
         email,
         password: passwordHash,
-        role: role || "SUPERVISOR",
+        role: role || 'SUPERVISOR',
       },
     });
 
-    return NextResponse.json(
-      { id: user.id, email: user.email },
-      { status: 201 },
-    );
+    return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
-    return NextResponse.json(
-      { message: "Erro ao criar usuário" },
-      { status: 500 },
-    );
+    console.error('Erro ao criar usuário:', error);
+    return NextResponse.json({ message: 'Erro ao criar usuário' }, { status: 500 });
   }
 }

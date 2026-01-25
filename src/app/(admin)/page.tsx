@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   SimpleGrid,
@@ -15,7 +15,7 @@ import {
   Card,
   Table,
   Input,
-} from "@chakra-ui/react";
+} from '@chakra-ui/react';
 import {
   CheckCircle2,
   Headphones,
@@ -24,7 +24,7 @@ import {
   Award,
   Calendar,
   XCircle,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -35,7 +35,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Cell,
-} from "recharts";
+} from 'recharts';
 
 type Funcionario = {
   id: string;
@@ -71,18 +71,18 @@ type DashboardRow = {
 };
 
 const MONTHS_PT = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ];
 
 function calcularBonus(percentual: number) {
@@ -98,23 +98,23 @@ export default function DashboardSupport() {
   const router = useRouter();
   const [referenceMonth, setReferenceMonth] = useState(() => {
     const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, '0');
     return `${now.getFullYear()}-${month}`;
   });
   const [equipeMetrics, setEquipeMetrics] = useState<DashboardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cardBg = "white";
-  const borderColor = "gray.200";
+  const cardBg = 'white';
+  const borderColor = 'gray.200';
 
   const { month, year, referenceLabel } = useMemo(() => {
-    const [y, m] = referenceMonth.split("-").map(Number);
+    const [y, m] = referenceMonth.split('-').map(Number);
     const safeMonth = Number.isFinite(m) ? m : new Date().getMonth() + 1;
     const safeYear = Number.isFinite(y) ? y : new Date().getFullYear();
     return {
       month: safeMonth,
       year: safeYear,
-      referenceLabel: `${MONTHS_PT[safeMonth - 1] ?? "Mês"}/${safeYear}`,
+      referenceLabel: `${MONTHS_PT[safeMonth - 1] ?? 'Mês'}/${safeYear}`,
     };
   }, [referenceMonth]);
 
@@ -126,20 +126,18 @@ export default function DashboardSupport() {
       setError(null);
       try {
         const [funcRes, metRes] = await Promise.all([
-          fetch("/api/funcionarios"),
+          fetch('/api/funcionarios'),
           fetch(`/api/metricas?month=${month}&year=${year}`),
         ]);
 
         if (!funcRes.ok || !metRes.ok) {
-          throw new Error("Erro ao carregar dados do dashboard");
+          throw new Error('Erro ao carregar dados do dashboard');
         }
 
         const funcionarios = (await funcRes.json()) as Funcionario[];
         const metricas = (await metRes.json()) as MetricasMensais[];
 
-        const metricasMap = new Map(
-          metricas.map((metrica) => [metrica.funcionarioId, metrica]),
-        );
+        const metricasMap = new Map(metricas.map((metrica) => [metrica.funcionarioId, metrica]));
 
         // Calcular média de atendimentos por setor/cargo
         const atendimentosPorSetor = new Map<string, number[]>();
@@ -147,7 +145,7 @@ export default function DashboardSupport() {
           const metrica = metricasMap.get(func.id);
           if (metrica) {
             // Usa setor se existir, senão usa cargo como fallback
-            const grupo = func.setor?.nome || func.cargo || "Sem Classificação";
+            const grupo = func.setor?.nome || func.cargo || 'Sem Classificação';
             if (!atendimentosPorSetor.has(grupo)) {
               atendimentosPorSetor.set(grupo, []);
             }
@@ -156,8 +154,7 @@ export default function DashboardSupport() {
             const countNota3 = metrica.countNota3 ?? 0;
             const countNota2 = metrica.countNota2 ?? 0;
             const countNota1 = metrica.countNota1 ?? 0;
-            const atendimentos =
-              countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+            const atendimentos = countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
             atendimentosPorSetor.get(grupo)!.push(atendimentos);
           }
         });
@@ -165,13 +162,12 @@ export default function DashboardSupport() {
         // Calcular médias por setor
         const mediaAtendimentosPorSetor = new Map<string, number>();
         atendimentosPorSetor.forEach((valores, setor) => {
-          const media =
-            valores.reduce((a, b) => a + b, 0) / valores.length || 0;
+          const media = valores.reduce((a, b) => a + b, 0) / valores.length || 0;
           mediaAtendimentosPorSetor.set(setor, media);
         });
 
         const rows = funcionarios
-          .filter((f) => f.status !== "INATIVO")
+          .filter((f) => f.status !== 'INATIVO')
           .map((funcionario) => {
             const metrica = metricasMap.get(funcionario.id);
             const countNota5 = metrica?.countNota5 ?? 0;
@@ -179,23 +175,14 @@ export default function DashboardSupport() {
             const countNota3 = metrica?.countNota3 ?? 0;
             const countNota2 = metrica?.countNota2 ?? 0;
             const countNota1 = metrica?.countNota1 ?? 0;
-            const atendimentos =
-              countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+            const atendimentos = countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
             const pontuacao =
-              countNota5 * 5 +
-              countNota4 * 4 +
-              countNota3 * 3 +
-              countNota2 * 2 +
-              countNota1 * 1;
+              countNota5 * 5 + countNota4 * 4 + countNota3 * 3 + countNota2 * 2 + countNota1 * 1;
             const maxPossivel = atendimentos * 5;
-            const percentual =
-              maxPossivel > 0 ? Math.round((pontuacao / maxPossivel) * 100) : 0;
+            const percentual = maxPossivel > 0 ? Math.round((pontuacao / maxPossivel) * 100) : 0;
 
             // Validação: precisa ter atendimentos >= média do setor/cargo
-            const grupo =
-              funcionario.setor?.nome ||
-              funcionario.cargo ||
-              "Sem Classificação";
+            const grupo = funcionario.setor?.nome || funcionario.cargo || 'Sem Classificação';
             const mediaGrupo = mediaAtendimentosPorSetor.get(grupo) || 0;
             const atendeMinimo = atendimentos >= mediaGrupo && mediaGrupo > 0;
             let bonus = 0;
@@ -222,7 +209,7 @@ export default function DashboardSupport() {
       } catch (fetchError) {
         console.error(fetchError);
         if (isMounted) {
-          setError("Não foi possível carregar os dados do dashboard.");
+          setError('Não foi possível carregar os dados do dashboard.');
         }
       } finally {
         if (isMounted) {
@@ -257,8 +244,7 @@ export default function DashboardSupport() {
     if (equipeMetrics.length === 0) return 0;
     // Retorna a média de atendimentos (total de atendimentos / número de funcionários)
     return Math.round(
-      equipeMetrics.reduce((acc, curr) => acc + curr.atendimentos, 0) /
-        equipeMetrics.length,
+      equipeMetrics.reduce((acc, curr) => acc + curr.atendimentos, 0) / equipeMetrics.length,
     );
   }, [equipeMetrics]);
 
@@ -308,13 +294,7 @@ export default function DashboardSupport() {
             borderRadius="full"
           />
 
-          <Flex
-            justify="space-between"
-            align="center"
-            wrap="wrap"
-            gap={4}
-            position="relative"
-          >
+          <Flex justify="space-between" align="center" wrap="wrap" gap={4} position="relative">
             <Box>
               <HStack mb={2}>
                 <Icon as={Headphones} color="white" boxSize={8} />
@@ -338,11 +318,7 @@ export default function DashboardSupport() {
               >
                 <Icon as={Calendar} color="white" boxSize={5} />
                 <Box textAlign="right">
-                  <Text
-                    fontSize="xs"
-                    color="whiteAlpha.800"
-                    fontWeight="medium"
-                  >
+                  <Text fontSize="xs" color="whiteAlpha.800" fontWeight="medium">
                     PERÍODO DE REFERÊNCIA
                   </Text>
                   <Text fontSize="md" fontWeight="bold" color="white">
@@ -359,7 +335,7 @@ export default function DashboardSupport() {
                   bg="whiteAlpha.200"
                   borderColor="whiteAlpha.400"
                   color="white"
-                  _placeholder={{ color: "whiteAlpha.700" }}
+                  _placeholder={{ color: 'whiteAlpha.700' }}
                 />
               </HStack>
               {error && (
@@ -380,21 +356,13 @@ export default function DashboardSupport() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #4299e1 0%, #0044CC 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #4299e1 0%, #0044CC 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start" mb={4}>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    fontWeight="bold"
-                    letterSpacing="wide"
-                  >
+                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
                     TOTAL ATENDIMENTOS
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
@@ -423,21 +391,16 @@ export default function DashboardSupport() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
             <Box
               h="4px"
-              bg={`linear-gradient(90deg, ${mediaEquipe >= 90 ? "#48bb78" : "#ed8936"} 0%, ${mediaEquipe >= 90 ? "#38a169" : "#dd6b20"} 100%)`}
+              bg={`linear-gradient(90deg, ${mediaEquipe >= 90 ? '#48bb78' : '#ed8936'} 0%, ${mediaEquipe >= 90 ? '#38a169' : '#dd6b20'} 100%)`}
             />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start" mb={4}>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    fontWeight="bold"
-                    letterSpacing="wide"
-                  >
+                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
                     MÉDIA DA EQUIPE
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
@@ -447,14 +410,10 @@ export default function DashboardSupport() {
                     atendimentos/técnico
                   </Text>
                 </Box>
-                <Box
-                  bg={mediaEquipe >= 90 ? "green.50" : "orange.50"}
-                  p={3}
-                  borderRadius="xl"
-                >
+                <Box bg={mediaEquipe >= 90 ? 'green.50' : 'orange.50'} p={3} borderRadius="xl">
                   <Icon
                     as={TrendingUp}
-                    color={mediaEquipe >= 90 ? "green.600" : "orange.600"}
+                    color={mediaEquipe >= 90 ? 'green.600' : 'orange.600'}
                     boxSize={7}
                   />
                 </Box>
@@ -468,16 +427,11 @@ export default function DashboardSupport() {
                     +{mediaEquipe - 80}%
                   </Text>
                 </HStack>
-                <Box
-                  h="8px"
-                  bg="gray.200"
-                  borderRadius="full"
-                  overflow="hidden"
-                >
+                <Box h="8px" bg="gray.200" borderRadius="full" overflow="hidden">
                   <Box
                     h="100%"
                     w={`${mediaEquipe}%`}
-                    bg={mediaEquipe >= 90 ? "green.500" : "orange.500"}
+                    bg={mediaEquipe >= 90 ? 'green.500' : 'orange.500'}
                     borderRadius="full"
                     transition="width 0.3s"
                   />
@@ -494,31 +448,23 @@ export default function DashboardSupport() {
             overflow="hidden"
             transition="all 0.3s"
             _hover={{
-              transform: "translateY(-4px)",
-              boxShadow: "2xl",
-              cursor: "pointer",
+              transform: 'translateY(-4px)',
+              boxShadow: '2xl',
+              cursor: 'pointer',
             }}
-            onClick={() => router.push("/comissoes")}
+            onClick={() => router.push('/comissoes')}
             role="button"
             tabIndex={0}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #9f7aea 0%, #667eea 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #9f7aea 0%, #667eea 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start" mb={4}>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    fontWeight="bold"
-                    letterSpacing="wide"
-                  >
+                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
                     PREVISÃO DE BÔNUS
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
-                    R$ {totalBonus.toLocaleString("pt-BR")}
+                    R$ {totalBonus.toLocaleString('pt-BR')}
                   </Heading>
                 </Box>
                 <Box bg="purple.50" p={3} borderRadius="xl">
@@ -543,21 +489,13 @@ export default function DashboardSupport() {
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
-            _hover={{ transform: "translateY(-4px)", boxShadow: "2xl" }}
+            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
           >
-            <Box
-              h="4px"
-              bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)"
-            />
+            <Box h="4px" bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start" mb={4}>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    fontWeight="bold"
-                    letterSpacing="wide"
-                  >
+                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
                     ALTA PERFORMANCE
                   </Text>
                   <Heading size="2xl" color="gray.800" mt={2}>
@@ -584,7 +522,7 @@ export default function DashboardSupport() {
         <SimpleGrid columns={{ base: 1, lg: 3 }} gap={6}>
           {/* Gráfico Principal */}
           <Box
-            gridColumn={{ lg: "span 2" }}
+            gridColumn={{ lg: 'span 2' }}
             bg={cardBg}
             p={6}
             borderRadius="xl"
@@ -607,41 +545,30 @@ export default function DashboardSupport() {
             </Flex>
             <Box h="320px" w="full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={equipeOrdenada}
-                  layout="vertical"
-                  margin={{ left: 20, right: 60 }}
-                >
+                <BarChart data={equipeOrdenada} layout="vertical" margin={{ left: 20, right: 60 }}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     horizontal={true}
                     vertical={false}
                     stroke="#E2E8F0"
                   />
-                  <XAxis
-                    type="number"
-                    domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: "#718096" }}
-                  />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#718096' }} />
                   <YAxis
                     dataKey="name"
                     type="category"
                     width={120}
-                    tick={{ fontSize: 12, fill: "#FFFFFF", fontWeight: 600 }}
+                    tick={{ fontSize: 12, fill: '#FFFFFF', fontWeight: 600 }}
                   />
                   <Tooltip
-                    cursor={{ fill: "#F7FAFC" }}
+                    cursor={{ fill: '#F7FAFC' }}
                     contentStyle={{
-                      backgroundColor: "#1A202C",
-                      border: "none",
-                      borderRadius: "8px",
-                      padding: "8px 12px",
+                      backgroundColor: '#1A202C',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
                     }}
-                    labelStyle={{ color: "#FFF", fontWeight: "bold" }}
-                    formatter={(value: number | undefined) => [
-                      `${value ?? 0}%`,
-                      "Performance",
-                    ]}
+                    labelStyle={{ color: '#FFF', fontWeight: 'bold' }}
+                    formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Performance']}
                   />
                   <ReferenceLine
                     x={80}
@@ -649,23 +576,22 @@ export default function DashboardSupport() {
                     strokeDasharray="5 5"
                     strokeWidth={2}
                     label={{
-                      position: "top",
-                      value: "Meta 80%",
-                      fill: "#E53E3E",
+                      position: 'top',
+                      value: 'Meta 80%',
+                      fill: '#E53E3E',
                       fontSize: 11,
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                     }}
                   />
                   <Bar
                     dataKey="percentual"
                     radius={[0, 8, 8, 0]}
                     label={{
-                      position: "right",
-                      fill: "#FFFFFF",
+                      position: 'right',
+                      fill: '#FFFFFF',
                       fontSize: 13,
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       offset: 5,
-                      formatter: (value) => `${value}%`,
                     }}
                   >
                     {equipeOrdenada.map((entry, index) => (
@@ -673,10 +599,10 @@ export default function DashboardSupport() {
                         key={`cell-${index}`}
                         fill={
                           entry.percentual >= 90
-                            ? "#38A169"
+                            ? '#38A169'
                             : entry.percentual >= 80
-                              ? "#4299E1"
-                              : "#E53E3E"
+                              ? '#4299E1'
+                              : '#E53E3E'
                         }
                       />
                     ))}
@@ -702,13 +628,7 @@ export default function DashboardSupport() {
                 Sistema de Pontuação
               </Heading>
               <VStack align="stretch" gap={3}>
-                <Flex
-                  p={3}
-                  bg="green.50"
-                  borderRadius="lg"
-                  justify="space-between"
-                  align="center"
-                >
+                <Flex p={3} bg="green.50" borderRadius="lg" justify="space-between" align="center">
                   <HStack>
                     <Badge colorScheme="green" variant="solid" fontSize="xs">
                       5★
@@ -721,13 +641,7 @@ export default function DashboardSupport() {
                     +5 pts
                   </Text>
                 </Flex>
-                <Flex
-                  p={3}
-                  bg="blue.50"
-                  borderRadius="lg"
-                  justify="space-between"
-                  align="center"
-                >
+                <Flex p={3} bg="blue.50" borderRadius="lg" justify="space-between" align="center">
                   <HStack>
                     <Badge colorScheme="blue" variant="solid" fontSize="xs">
                       4★
@@ -740,13 +654,7 @@ export default function DashboardSupport() {
                     +2 pts
                   </Text>
                 </Flex>
-                <Flex
-                  p={3}
-                  bg="yellow.50"
-                  borderRadius="lg"
-                  justify="space-between"
-                  align="center"
-                >
+                <Flex p={3} bg="yellow.50" borderRadius="lg" justify="space-between" align="center">
                   <HStack>
                     <Badge colorScheme="yellow" variant="solid" fontSize="xs">
                       3★
@@ -759,13 +667,7 @@ export default function DashboardSupport() {
                     -3 pts
                   </Text>
                 </Flex>
-                <Flex
-                  p={3}
-                  bg="red.50"
-                  borderRadius="lg"
-                  justify="space-between"
-                  align="center"
-                >
+                <Flex p={3} bg="red.50" borderRadius="lg" justify="space-between" align="center">
                   <HStack>
                     <Badge colorScheme="red" variant="solid" fontSize="xs">
                       1★
@@ -879,53 +781,25 @@ export default function DashboardSupport() {
                 <Table.ColumnHeader fontWeight="bold" color="gray.700">
                   Técnico
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Turno
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Atendimentos
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Pontuação
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Máx. Possível
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Performance
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="center"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
                   Status
                 </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  textAlign="end"
-                  fontWeight="bold"
-                  color="gray.700"
-                >
+                <Table.ColumnHeader textAlign="end" fontWeight="bold" color="gray.700">
                   Bônus
                 </Table.ColumnHeader>
               </Table.Row>
@@ -938,21 +812,15 @@ export default function DashboardSupport() {
                 return (
                   <Table.Row
                     key={index}
-                    bg={row.destaque ? "blue.50" : "white"}
-                    _hover={{ bg: row.destaque ? "blue.100" : "gray.50" }}
+                    bg={row.destaque ? 'blue.50' : 'white'}
+                    _hover={{ bg: row.destaque ? 'blue.100' : 'gray.50' }}
                     transition="all 0.2s"
                   >
                     <Table.Cell>
                       <HStack>
-                        <Text fontWeight={row.destaque ? "bold" : "medium"}>
-                          {row.name}
-                        </Text>
+                        <Text fontWeight={row.destaque ? 'bold' : 'medium'}>{row.name}</Text>
                         {row.destaque && (
-                          <Badge
-                            colorScheme="blue"
-                            variant="solid"
-                            fontSize="xs"
-                          >
+                          <Badge colorScheme="blue" variant="solid" fontSize="xs">
                             Você
                           </Badge>
                         )}
@@ -962,31 +830,19 @@ export default function DashboardSupport() {
                       {row.turno}
                     </Table.Cell>
                     <Table.Cell textAlign="center" fontWeight="medium">
-                      {row.atendimentos.toLocaleString("pt-BR")}
+                      {row.atendimentos.toLocaleString('pt-BR')}
                     </Table.Cell>
-                    <Table.Cell
-                      textAlign="center"
-                      fontWeight="medium"
-                      color="blue.600"
-                    >
+                    <Table.Cell textAlign="center" fontWeight="medium" color="blue.600">
                       {row.pontuacao}
                     </Table.Cell>
-                    <Table.Cell
-                      textAlign="center"
-                      color="gray.500"
-                      fontSize="sm"
-                    >
+                    <Table.Cell textAlign="center" color="gray.500" fontSize="sm">
                       {row.maxPossivel}
                     </Table.Cell>
                     <Table.Cell textAlign="center">
                       <VStack gap={1}>
                         <Badge
                           colorScheme={
-                            row.percentual >= 90
-                              ? "green"
-                              : row.percentual >= 80
-                                ? "blue"
-                                : "red"
+                            row.percentual >= 90 ? 'green' : row.percentual >= 80 ? 'blue' : 'red'
                           }
                           variant="solid"
                           fontSize="sm"
@@ -995,22 +851,16 @@ export default function DashboardSupport() {
                         >
                           {row.percentual}%
                         </Badge>
-                        <Box
-                          w="60px"
-                          h="4px"
-                          bg="gray.200"
-                          borderRadius="full"
-                          overflow="hidden"
-                        >
+                        <Box w="60px" h="4px" bg="gray.200" borderRadius="full" overflow="hidden">
                           <Box
                             h="100%"
                             w={`${row.percentual}%`}
                             bg={
                               row.percentual >= 90
-                                ? "green.500"
+                                ? 'green.500'
                                 : row.percentual >= 80
-                                  ? "blue.500"
-                                  : "red.500"
+                                  ? 'blue.500'
+                                  : 'red.500'
                             }
                             borderRadius="full"
                             transition="width 0.3s"
@@ -1020,25 +870,11 @@ export default function DashboardSupport() {
                     </Table.Cell>
                     <Table.Cell textAlign="center">
                       {isEligible ? (
-                        <Box
-                          display="inline-flex"
-                          bg="green.50"
-                          p={2}
-                          borderRadius="lg"
-                        >
-                          <Icon
-                            as={CheckCircle2}
-                            color="green.600"
-                            boxSize={5}
-                          />
+                        <Box display="inline-flex" bg="green.50" p={2} borderRadius="lg">
+                          <Icon as={CheckCircle2} color="green.600" boxSize={5} />
                         </Box>
                       ) : (
-                        <Box
-                          display="inline-flex"
-                          bg="red.50"
-                          p={2}
-                          borderRadius="lg"
-                        >
+                        <Box display="inline-flex" bg="red.50" p={2} borderRadius="lg">
                           <Icon as={XCircle} color="red.600" boxSize={5} />
                         </Box>
                       )}
@@ -1046,14 +882,10 @@ export default function DashboardSupport() {
                     <Table.Cell textAlign="end">
                       {bonus > 0 ? (
                         <Text fontWeight="bold" fontSize="md" color="green.600">
-                          R$ {bonus.toLocaleString("pt-BR")}
+                          R$ {bonus.toLocaleString('pt-BR')}
                         </Text>
                       ) : (
-                        <Text
-                          fontWeight="medium"
-                          fontSize="sm"
-                          color="gray.400"
-                        >
+                        <Text fontWeight="medium" fontSize="sm" color="gray.400">
                           —
                         </Text>
                       )}

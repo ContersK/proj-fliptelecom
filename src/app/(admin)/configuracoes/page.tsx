@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, type ChangeEvent } from "react";
+import React, { useState, type ChangeEvent } from 'react';
 import {
   Box,
   Button,
@@ -13,29 +13,21 @@ import {
   VStack,
   Card,
   Stack,
-} from "@chakra-ui/react";
-import {
-  Settings,
-  Save,
-  Bell,
-  DollarSign,
-  Shield,
-  Database,
-  UserPlus,
-} from "lucide-react";
-import { FieldHelper } from "@/components/FieldHelper";
-import { SwitchField } from "@/components/SwitchField";
+} from '@chakra-ui/react';
+import { Settings, Save, Bell, DollarSign, Shield, Database, UserPlus } from 'lucide-react';
+import { FieldHelper } from '@/components/FieldHelper';
+import { SwitchField } from '@/components/SwitchField';
 
 export default function ConfiguracoesPage() {
   // Estados para configurações gerais
-  const [nomeEmpresa, setNomeEmpresa] = useState("FlipTelecom");
-  const [emailSuporte, setEmailSuporte] = useState("suporte@fliptelecom.com");
-  const [telefone, setTelefone] = useState("(11) 99999-9999");
+  const [nomeEmpresa, setNomeEmpresa] = useState('FlipTelecom');
+  const [emailSuporte, setEmailSuporte] = useState('suporte@fliptelecom.com');
+  const [telefone, setTelefone] = useState('(11) 99999-9999');
 
   // Estados para configurações de comissões
-  const [valorComissao, setValorComissao] = useState("300");
-  const [metaMinima, setMetaMinima] = useState("90");
-  const [diaFechamento, setDiaFechamento] = useState("5");
+  const [valorComissao, setValorComissao] = useState('300');
+  const [metaMinima, setMetaMinima] = useState('90');
+  const [diaFechamento, setDiaFechamento] = useState('5');
 
   // Estados para notificações
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -45,31 +37,31 @@ export default function ConfiguracoesPage() {
   // Estados para sistema
   const [autoBackup, setAutoBackup] = useState(true);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState("30");
+  const [sessionTimeout, setSessionTimeout] = useState('30');
 
   // Estados para criação de usuários
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userPassword, setUserPassword] = useState("");
-  const [userRole, setUserRole] = useState("SUPERVISOR");
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [userRole, setUserRole] = useState('SUPERVISOR');
   const [creatingUser, setCreatingUser] = useState(false);
 
   const handleSaveSettings = () => {
     // Aqui você implementaria a lógica para salvar as configurações
-    alert("Configurações salvas com sucesso!");
+    alert('Configurações salvas com sucesso!');
   };
 
   const handleCreateUser = async () => {
     if (!userName || !userEmail || !userPassword) {
-      alert("Preencha nome, email e senha.");
+      alert('Preencha nome, email e senha.');
       return;
     }
 
     setCreatingUser(true);
     try {
-      const res = await fetch("/api/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: userName,
           email: userEmail,
@@ -80,17 +72,17 @@ export default function ConfiguracoesPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data?.message || "Erro ao criar usuário");
+        throw new Error(data?.message || 'Erro ao criar usuário');
       }
 
-      alert("Usuário criado com sucesso!");
-      setUserName("");
-      setUserEmail("");
-      setUserPassword("");
-      setUserRole("SUPERVISOR");
+      alert('Usuário criado com sucesso!');
+      setUserName('');
+      setUserEmail('');
+      setUserPassword('');
+      setUserRole('SUPERVISOR');
     } catch (error) {
       console.error(error);
-      alert("Erro ao criar usuário");
+      alert('Erro ao criar usuário');
     } finally {
       setCreatingUser(false);
     }
@@ -136,9 +128,7 @@ export default function ConfiguracoesPage() {
               <FieldHelper label="Nome da Empresa">
                 <Input
                   value={nomeEmpresa}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setNomeEmpresa(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNomeEmpresa(e.target.value)}
                   placeholder="Digite o nome da empresa"
                 />
               </FieldHelper>
@@ -147,9 +137,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="email"
                   value={emailSuporte}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setEmailSuporte(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEmailSuporte(e.target.value)}
                   placeholder="email@exemplo.com"
                 />
               </FieldHelper>
@@ -157,9 +145,7 @@ export default function ConfiguracoesPage() {
               <FieldHelper label="Telefone de Contato">
                 <Input
                   value={telefone}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setTelefone(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setTelefone(e.target.value)}
                   placeholder="(00) 00000-0000"
                 />
               </FieldHelper>
@@ -189,9 +175,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="number"
                   value={valorComissao}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setValorComissao(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setValorComissao(e.target.value)}
                   placeholder="300"
                 />
               </FieldHelper>
@@ -200,9 +184,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="number"
                   value={metaMinima}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setMetaMinima(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMetaMinima(e.target.value)}
                   placeholder="90"
                 />
               </FieldHelper>
@@ -211,9 +193,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="number"
                   value={diaFechamento}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setDiaFechamento(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setDiaFechamento(e.target.value)}
                   placeholder="5"
                   min="1"
                   max="31"
@@ -241,13 +221,7 @@ export default function ConfiguracoesPage() {
             </Flex>
 
             <Stack gap={4}>
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="gray.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="gray.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Notificações por Email
@@ -263,13 +237,7 @@ export default function ConfiguracoesPage() {
                 />
               </Flex>
 
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="gray.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="gray.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Alertas de Performance
@@ -285,13 +253,7 @@ export default function ConfiguracoesPage() {
                 />
               </Flex>
 
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="gray.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="gray.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Alertas de Pagamento
@@ -328,13 +290,7 @@ export default function ConfiguracoesPage() {
             </Flex>
 
             <Stack gap={4}>
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="gray.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="gray.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Backup Automático
@@ -350,13 +306,7 @@ export default function ConfiguracoesPage() {
                 />
               </Flex>
 
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="gray.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="gray.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Autenticação em Dois Fatores
@@ -376,11 +326,9 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="number"
                   value={sessionTimeout}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setSessionTimeout(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setSessionTimeout(e.target.value)}
                   placeholder="30"
-                  w={{ base: "100%", md: "300px" }}
+                  w={{ base: '100%', md: '300px' }}
                 />
               </FieldHelper>
             </Stack>
@@ -408,9 +356,7 @@ export default function ConfiguracoesPage() {
               <FieldHelper label="Nome Completo">
                 <Input
                   value={userName}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setUserName(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setUserName(e.target.value)}
                   placeholder="Ex: Maria Silva"
                 />
               </FieldHelper>
@@ -419,9 +365,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="email"
                   value={userEmail}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setUserEmail(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setUserEmail(e.target.value)}
                   placeholder="email@empresa.com"
                 />
               </FieldHelper>
@@ -430,9 +374,7 @@ export default function ConfiguracoesPage() {
                 <Input
                   type="password"
                   value={userPassword}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setUserPassword(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setUserPassword(e.target.value)}
                   placeholder="Digite uma senha"
                 />
               </FieldHelper>
@@ -440,10 +382,10 @@ export default function ConfiguracoesPage() {
               <FieldHelper label="Perfil de Acesso">
                 <select
                   style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "6px",
-                    border: "1px solid #E2E8F0",
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: '1px solid #E2E8F0',
                   }}
                   value={userRole}
                   onChange={(e) => setUserRole(e.target.value)}
@@ -455,11 +397,7 @@ export default function ConfiguracoesPage() {
             </SimpleGrid>
 
             <Flex justify="flex-end" mt={6}>
-              <Button
-                colorScheme="blue"
-                onClick={handleCreateUser}
-                loading={creatingUser}
-              >
+              <Button colorScheme="blue" onClick={handleCreateUser} loading={creatingUser}>
                 Criar Usuário
               </Button>
             </Flex>
@@ -490,13 +428,7 @@ export default function ConfiguracoesPage() {
             </Flex>
 
             <Stack gap={4}>
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="red.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="red.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Limpar Todos os Dados
@@ -510,13 +442,7 @@ export default function ConfiguracoesPage() {
                 </Button>
               </Flex>
 
-              <Flex
-                justify="space-between"
-                align="center"
-                p={4}
-                bg="red.50"
-                borderRadius="lg"
-              >
+              <Flex justify="space-between" align="center" p={4} bg="red.50" borderRadius="lg">
                 <Box>
                   <Text fontWeight="medium" color="gray.700">
                     Resetar Sistema

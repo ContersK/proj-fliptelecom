@@ -164,7 +164,10 @@ npm run build        # Cria build de produção
 npm start            # Inicia servidor de produção
 
 # Qualidade de Código
-npm run lint         # Executa ESLint
+npm run lint         # Verifica com ESLint
+npm run lint:fix     # Corrige automaticamente com ESLint
+npm run format       # Formata com Prettier
+npm run format:check # Checa formatação com Prettier
 
 # Banco de Dados
 npx prisma studio    # Interface visual para o banco
@@ -174,6 +177,27 @@ npm run seed         # Popula banco com dados de teste
 ```
 
 ## 🔐 Segurança
+
+## 🧭 Padrão de Código
+
+- Estilo de código padronizado com Prettier (largura 100, aspas simples, trailing commas)
+- Lint com ESLint (flat config do Next.js) com regra de variáveis não usadas (`@typescript-eslint/no-unused-vars`)
+- Prefixo `_` em variáveis/args permite ignorar a regra de não usados
+
+### Fluxo recomendado
+
+```bash
+# 1) Formatar
+npm run format
+
+# 2) Corrigir lint automaticamente
+npm run lint:fix
+
+# 3) Verificar antes de commit
+npm run format:check && npm run lint
+```
+
+> Dica: configure seu editor para rodar Prettier on save.
 
 - Senhas criptografadas com bcryptjs
 - Validação de entrada em todas as rotas

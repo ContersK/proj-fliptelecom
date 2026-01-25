@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma';
 
 async function getManagedSetorId() {
-  const sessionToken = (await cookies()).get("session_token")?.value;
+  const sessionToken = (await cookies()).get('session_token')?.value;
   if (!sessionToken) return null;
 
   const gerencia = await prisma.gerencia.findUnique({
@@ -18,9 +18,9 @@ async function getManagedSetorId() {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const funcionarioId = searchParams.get("funcionarioId");
-    const month = searchParams.get("month");
-    const year = searchParams.get("year");
+    const funcionarioId = searchParams.get('funcionarioId');
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
     const setorId = await getManagedSetorId();
 
     const where: {
@@ -57,16 +57,13 @@ export async function GET(req: Request) {
           },
         },
       },
-      orderBy: [{ year: "desc" }, { month: "desc" }],
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
 
     return NextResponse.json(metricas);
   } catch (error) {
-    console.error("Erro ao buscar métricas:", error);
-    return NextResponse.json(
-      { error: "Erro ao buscar métricas" },
-      { status: 500 },
-    );
+    console.error('Erro ao buscar métricas:', error);
+    return NextResponse.json({ error: 'Erro ao buscar métricas' }, { status: 500 });
   }
 }
 
@@ -86,14 +83,9 @@ export async function POST(req: Request) {
     } = data;
 
     // Calcula o score final
-    const totalAvaliacoes =
-      countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
+    const totalAvaliacoes = countNota5 + countNota4 + countNota3 + countNota2 + countNota1;
     const somaNotas =
-      countNota5 * 5 +
-      countNota4 * 4 +
-      countNota3 * 3 +
-      countNota2 * 2 +
-      countNota1 * 1;
+      countNota5 * 5 + countNota4 * 4 + countNota3 * 3 + countNota2 * 2 + countNota1 * 1;
     const finalScore = totalAvaliacoes > 0 ? somaNotas / totalAvaliacoes : 0;
 
     // Calcula a porcentagem (nota média / 5 * 100)
@@ -108,9 +100,7 @@ export async function POST(req: Request) {
     let valorComissao = 0;
     if (funcionario?.setor?.commissionRules) {
       // Encontra a regra aplicável baseada na porcentagem
-      const regra = funcionario.setor.commissionRules.find(
-        (r) => porcentagem >= r.PorcentagemMin,
-      );
+      const regra = funcionario.setor.commissionRules.find((r) => porcentagem >= r.PorcentagemMin);
       if (regra) {
         valorComissao = regra.ValorComissao;
       }
@@ -150,10 +140,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(metrica, { status: 201 });
   } catch (error) {
-    console.error("Erro ao salvar métrica:", error);
-    return NextResponse.json(
-      { error: "Erro ao salvar métrica" },
-      { status: 500 },
-    );
+    console.error('Erro ao salvar métrica:', error);
+    return NextResponse.json({ error: 'Erro ao salvar métrica' }, { status: 500 });
   }
 }

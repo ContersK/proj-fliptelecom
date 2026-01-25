@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { hash } from "bcryptjs"; // Importante para a senha
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma';
+import { hash } from 'bcryptjs'; // Importante para a senha
 
 async function getManagedSetorId() {
-  const sessionToken = (await cookies()).get("session_token")?.value;
+  const sessionToken = (await cookies()).get('session_token')?.value;
   if (!sessionToken) return null;
 
   const gerencia = await prisma.gerencia.findUnique({
@@ -22,15 +22,12 @@ export async function GET() {
     const funcionarios = await prisma.funcionario.findMany({
       where: setorId ? { setorId } : undefined,
       include: { setor: true },
-      orderBy: { nome: "asc" },
+      orderBy: { nome: 'asc' },
     });
     return NextResponse.json(funcionarios);
   } catch (error) {
-    console.error("Erro ao buscar funcionários:", error);
-    return NextResponse.json(
-      { error: "Erro ao buscar funcionários" },
-      { status: 500 },
-    );
+    console.error('Erro ao buscar funcionários:', error);
+    return NextResponse.json({ error: 'Erro ao buscar funcionários' }, { status: 500 });
   }
 }
 
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
             name: funcionarioData.nome,
             email: funcionarioData.email,
             password: passwordHash,
-            role: "USER", // Ou "ADMIN", se preferir
+            role: 'USER', // Ou "ADMIN", se preferir
           },
         });
       }
@@ -76,9 +73,6 @@ export async function POST(req: Request) {
     return NextResponse.json(novoFuncionario, { status: 201 });
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Erro ao criar funcionário" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Erro ao criar funcionário' }, { status: 500 });
   }
 }

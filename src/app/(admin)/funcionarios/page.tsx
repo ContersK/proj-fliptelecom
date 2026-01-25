@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   Box,
   Heading,
@@ -25,16 +25,8 @@ import {
   DialogCloseTrigger,
   DialogBackdrop,
   Grid,
-} from "@chakra-ui/react";
-import {
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  UserCheck,
-  UserX,
-  BarChart3,
-} from "lucide-react";
+} from '@chakra-ui/react';
+import { Plus, Search, Edit2, Trash2, UserCheck, UserX, BarChart3 } from 'lucide-react';
 
 // Tipo do Funcionário
 interface Funcionario {
@@ -63,23 +55,23 @@ export default function FuncionariosPage() {
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMetricasDrawerOpen, setIsMetricasDrawerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Estado do Formulário
   const [formData, setFormData] = useState<Partial<Funcionario>>({
-    nome: "",
-    email: "",
-    cargo: "Suporte N1",
-    turno: "A",
-    status: "ATIVO",
+    nome: '',
+    email: '',
+    cargo: 'Suporte N1',
+    turno: 'A',
+    status: 'ATIVO',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Estado do Formulário de Métricas
   const [metricasForm, setMetricasForm] = useState<MetricasForm>({
-    funcionarioId: "",
-    funcionarioNome: "",
+    funcionarioId: '',
+    funcionarioNome: '',
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
     countNota5: 0,
@@ -94,11 +86,11 @@ export default function FuncionariosPage() {
   async function fetchFuncionarios() {
     setLoading(true);
     try {
-      const res = await fetch("/api/funcionarios");
+      const res = await fetch('/api/funcionarios');
       const data = await res.json();
       setFuncionarios(data);
     } catch (error) {
-      console.error("Erro ao buscar", error);
+      console.error('Erro ao buscar', error);
     } finally {
       setLoading(false);
     }
@@ -116,11 +108,11 @@ export default function FuncionariosPage() {
     } else {
       setEditingId(null);
       setFormData({
-        nome: "",
-        email: "",
-        cargo: "Suporte N1",
-        turno: "A",
-        status: "ATIVO",
+        nome: '',
+        email: '',
+        cargo: 'Suporte N1',
+        turno: 'A',
+        status: 'ATIVO',
       });
     }
     setIsDrawerOpen(true);
@@ -128,29 +120,26 @@ export default function FuncionariosPage() {
 
   // 3. SALVAR (CREATE ou UPDATE)
   async function handleSave() {
-    if (!formData.nome || !formData.turno)
-      return alert("Preencha os campos obrigatórios");
+    if (!formData.nome || !formData.turno) return alert('Preencha os campos obrigatórios');
 
     setSaving(true);
     try {
-      const method = editingId ? "PUT" : "POST";
-      const url = editingId
-        ? `/api/funcionarios/${editingId}`
-        : "/api/funcionarios";
+      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId ? `/api/funcionarios/${editingId}` : '/api/funcionarios';
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Erro ao salvar");
+      if (!res.ok) throw new Error('Erro ao salvar');
 
       await fetchFuncionarios(); // Atualiza a lista
       setIsDrawerOpen(false); // Fecha a gaveta
     } catch (error) {
-      console.error("Erro ao salvar funcionário:", error);
-      alert("Erro ao salvar funcionário");
+      console.error('Erro ao salvar funcionário:', error);
+      alert('Erro ao salvar funcionário');
     } finally {
       setSaving(false);
     }
@@ -158,13 +147,13 @@ export default function FuncionariosPage() {
 
   // 4. DELETAR
   async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir?")) return;
+    if (!confirm('Tem certeza que deseja excluir?')) return;
     try {
-      await fetch(`/api/funcionarios/${id}`, { method: "DELETE" });
+      await fetch(`/api/funcionarios/${id}`, { method: 'DELETE' });
       fetchFuncionarios();
     } catch (error) {
-      console.error("Erro ao deletar funcionário:", error);
-      alert("Erro ao deletar");
+      console.error('Erro ao deletar funcionário:', error);
+      alert('Erro ao deletar');
     }
   }
 
@@ -188,9 +177,9 @@ export default function FuncionariosPage() {
   async function handleSaveMetricas() {
     setSavingMetricas(true);
     try {
-      const res = await fetch("/api/metricas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/metricas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           funcionarioId: metricasForm.funcionarioId,
           month: metricasForm.month,
@@ -203,13 +192,13 @@ export default function FuncionariosPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Erro ao salvar métricas");
+      if (!res.ok) throw new Error('Erro ao salvar métricas');
 
-      alert("Métricas salvas com sucesso!");
+      alert('Métricas salvas com sucesso!');
       setIsMetricasDrawerOpen(false);
     } catch (error) {
-      console.error("Erro ao salvar métricas:", error);
-      alert("Erro ao salvar métricas");
+      console.error('Erro ao salvar métricas:', error);
+      alert('Erro ao salvar métricas');
     } finally {
       setSavingMetricas(false);
     }
@@ -236,7 +225,7 @@ export default function FuncionariosPage() {
           onClick={() => handleOpenDrawer()}
           bg="#0044CC"
           color="white"
-          _hover={{ bg: "#003399" }}
+          _hover={{ bg: '#003399' }}
           size="sm"
         >
           <Plus size={18} style={{ marginRight: 8 }} />
@@ -298,20 +287,18 @@ export default function FuncionariosPage() {
             </Table.Header>
             <Table.Body>
               {filtered.map((func) => (
-                <Table.Row key={func.id} _hover={{ bg: "gray.50" }}>
+                <Table.Row key={func.id} _hover={{ bg: 'gray.50' }}>
                   <Table.Cell pl={6}>
                     <HStack gap={3}>
                       <Avatar.Root size="sm" bg="blue.100" color="blue.700">
-                        <Avatar.Fallback>
-                          {func.nome.substring(0, 2).toUpperCase()}
-                        </Avatar.Fallback>
+                        <Avatar.Fallback>{func.nome.substring(0, 2).toUpperCase()}</Avatar.Fallback>
                       </Avatar.Root>
                       <Box>
                         <Text fontWeight="medium" color="gray.800">
                           {func.nome}
                         </Text>
                         <Text fontSize="xs" color="gray.500">
-                          {func.email || "Sem email"}
+                          {func.email || 'Sem email'}
                         </Text>
                       </Box>
                     </HStack>
@@ -325,7 +312,7 @@ export default function FuncionariosPage() {
                   <Table.Cell>
                     <Badge
                       variant="solid"
-                      colorPalette={func.status === "ATIVO" ? "green" : "red"}
+                      colorPalette={func.status === 'ATIVO' ? 'green' : 'red'}
                       size="sm"
                     >
                       {func.status}
@@ -338,7 +325,7 @@ export default function FuncionariosPage() {
                         variant="ghost"
                         size="sm"
                         color="purple.500"
-                        _hover={{ color: "purple.600", bg: "purple.50" }}
+                        _hover={{ color: 'purple.600', bg: 'purple.50' }}
                         onClick={() => handleOpenMetricas(func)}
                       >
                         <BarChart3 size={16} />
@@ -357,7 +344,7 @@ export default function FuncionariosPage() {
                         variant="ghost"
                         size="sm"
                         color="red.400"
-                        _hover={{ color: "red.600", bg: "red.50" }}
+                        _hover={{ color: 'red.600', bg: 'red.50' }}
                         onClick={() => handleDelete(func.id)}
                       >
                         <Trash2 size={16} />
@@ -373,21 +360,12 @@ export default function FuncionariosPage() {
 
       {/* --- DRAWER (GAVETA) DE CADASTRO/EDIÇÃO --- */}
       {/* Usando Drawer.Root do Chakra v3 */}
-      <Drawer.Root
-        open={isDrawerOpen}
-        onOpenChange={(e) => setIsDrawerOpen(e.open)}
-      >
+      <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
         <Drawer.Backdrop />
         <Drawer.Positioner>
           <Drawer.Content>
-            <Drawer.Header
-              borderBottom="1px solid"
-              borderColor="gray.100"
-              pb={4}
-            >
-              <Drawer.Title>
-                {editingId ? "Editar Funcionário" : "Novo Colaborador"}
-              </Drawer.Title>
+            <Drawer.Header borderBottom="1px solid" borderColor="gray.100" pb={4}>
+              <Drawer.Title>{editingId ? 'Editar Funcionário' : 'Novo Colaborador'}</Drawer.Title>
               <Drawer.CloseTrigger />
             </Drawer.Header>
 
@@ -399,9 +377,7 @@ export default function FuncionariosPage() {
                   </Text>
                   <Input
                     value={formData.nome}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nome: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     placeholder="Ex: Rafael Alencar"
                   />
                 </Box>
@@ -412,9 +388,7 @@ export default function FuncionariosPage() {
                   </Text>
                   <Input
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="email@flip.com"
                   />
                 </Box>
@@ -427,15 +401,13 @@ export default function FuncionariosPage() {
                     {/* Select simples nativo para evitar complexidade do v3 agora */}
                     <select
                       style={{
-                        width: "100%",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #E2E8F0",
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '6px',
+                        border: '1px solid #E2E8F0',
                       }}
                       value={formData.turno}
-                      onChange={(e) =>
-                        setFormData({ ...formData, turno: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
                     >
                       <option value="A">Turno A</option>
                       <option value="B">Turno B</option>
@@ -449,9 +421,7 @@ export default function FuncionariosPage() {
                     </Text>
                     <Input
                       value={formData.cargo}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cargo: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                     />
                   </Box>
                 </HStack>
@@ -463,25 +433,17 @@ export default function FuncionariosPage() {
                   <HStack gap={3}>
                     <Button
                       size="sm"
-                      variant={
-                        formData.status === "ATIVO" ? "solid" : "outline"
-                      }
+                      variant={formData.status === 'ATIVO' ? 'solid' : 'outline'}
                       colorPalette="green"
-                      onClick={() =>
-                        setFormData({ ...formData, status: "ATIVO" })
-                      }
+                      onClick={() => setFormData({ ...formData, status: 'ATIVO' })}
                     >
                       <UserCheck size={16} style={{ marginRight: 4 }} /> Ativo
                     </Button>
                     <Button
                       size="sm"
-                      variant={
-                        formData.status === "INATIVO" ? "solid" : "outline"
-                      }
+                      variant={formData.status === 'INATIVO' ? 'solid' : 'outline'}
                       colorPalette="red"
-                      onClick={() =>
-                        setFormData({ ...formData, status: "INATIVO" })
-                      }
+                      onClick={() => setFormData({ ...formData, status: 'INATIVO' })}
                     >
                       <UserX size={16} style={{ marginRight: 4 }} /> Inativo
                     </Button>
@@ -491,20 +453,11 @@ export default function FuncionariosPage() {
             </Drawer.Body>
 
             <Drawer.Footer borderTop="1px solid" borderColor="gray.100" pt={4}>
-              <Button
-                variant="outline"
-                mr={3}
-                onClick={() => setIsDrawerOpen(false)}
-              >
+              <Button variant="outline" mr={3} onClick={() => setIsDrawerOpen(false)}>
                 Cancelar
               </Button>
-              <Button
-                bg="#0044CC"
-                color="white"
-                onClick={handleSave}
-                loading={saving}
-              >
-                {editingId ? "Salvar Alterações" : "Cadastrar"}
+              <Button bg="#0044CC" color="white" onClick={handleSave} loading={saving}>
+                {editingId ? 'Salvar Alterações' : 'Cadastrar'}
               </Button>
             </Drawer.Footer>
           </Drawer.Content>
@@ -512,14 +465,11 @@ export default function FuncionariosPage() {
       </Drawer.Root>
 
       {/* --- MODAL DE REGISTRO DE MÉTRICAS/NOTAS --- */}
-      <DialogRoot
-        open={isMetricasDrawerOpen}
-        onOpenChange={(e) => setIsMetricasDrawerOpen(e.open)}
-      >
+      <DialogRoot open={isMetricasDrawerOpen} onOpenChange={(e) => setIsMetricasDrawerOpen(e.open)}>
         <DialogBackdrop bg="blackAlpha.600" />
         <DialogContent
           maxW="750px"
-          maxH={{ base: "90vh", md: "85vh" }}
+          maxH={{ base: '90vh', md: '85vh' }}
           h="auto"
           position="fixed"
           top="50%"
@@ -551,18 +501,18 @@ export default function FuncionariosPage() {
             overflowY="auto"
             flex={1}
             css={{
-              "&::-webkit-scrollbar": {
-                width: "8px",
+              '&::-webkit-scrollbar': {
+                width: '8px',
               },
-              "&::-webkit-scrollbar-track": {
-                background: "#f1f1f1",
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
               },
-              "&::-webkit-scrollbar-thumb": {
-                background: "#888",
-                borderRadius: "4px",
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
               },
-              "&::-webkit-scrollbar-thumb:hover": {
-                background: "#555",
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: '#555',
               },
             }}
           >
@@ -586,13 +536,13 @@ export default function FuncionariosPage() {
                     </Text>
                     <select
                       style={{
-                        width: "100%",
-                        padding: "12px",
-                        fontSize: "15px",
-                        borderRadius: "8px",
-                        border: "2px solid #E2E8F0",
-                        backgroundColor: "white",
-                        cursor: "pointer",
+                        width: '100%',
+                        padding: '12px',
+                        fontSize: '15px',
+                        borderRadius: '8px',
+                        border: '2px solid #E2E8F0',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
                       }}
                       value={metricasForm.month}
                       onChange={(e) =>
@@ -604,8 +554,8 @@ export default function FuncionariosPage() {
                     >
                       {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                         <option key={m} value={m}>
-                          {new Date(2000, m - 1).toLocaleDateString("pt-BR", {
-                            month: "long",
+                          {new Date(2000, m - 1).toLocaleDateString('pt-BR', {
+                            month: 'long',
                           })}
                         </option>
                       ))}
@@ -653,7 +603,7 @@ export default function FuncionariosPage() {
                     border="2px solid"
                     borderColor="gray.200"
                     transition="all 0.2s"
-                    _hover={{ borderColor: "purple.300", shadow: "md" }}
+                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -671,11 +621,7 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text
-                            fontWeight="bold"
-                            fontSize="lg"
-                            color="gray.800"
-                          >
+                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
                             Nota 5
                           </Text>
                           <Text fontSize="sm" color="gray.500">
@@ -694,8 +640,8 @@ export default function FuncionariosPage() {
                         color="gray.700"
                         borderWidth="2px"
                         _focus={{
-                          borderColor: "purple.500",
-                          shadow: "outline",
+                          borderColor: 'purple.500',
+                          shadow: 'outline',
                         }}
                         value={metricasForm.countNota5}
                         onChange={(e) =>
@@ -716,7 +662,7 @@ export default function FuncionariosPage() {
                     border="2px solid"
                     borderColor="gray.200"
                     transition="all 0.2s"
-                    _hover={{ borderColor: "purple.300", shadow: "md" }}
+                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -734,11 +680,7 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text
-                            fontWeight="bold"
-                            fontSize="lg"
-                            color="gray.800"
-                          >
+                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
                             Nota 4
                           </Text>
                           <Text fontSize="sm" color="gray.500">
@@ -757,8 +699,8 @@ export default function FuncionariosPage() {
                         color="gray.700"
                         borderWidth="2px"
                         _focus={{
-                          borderColor: "purple.500",
-                          shadow: "outline",
+                          borderColor: 'purple.500',
+                          shadow: 'outline',
                         }}
                         value={metricasForm.countNota4}
                         onChange={(e) =>
@@ -779,7 +721,7 @@ export default function FuncionariosPage() {
                     border="2px solid"
                     borderColor="gray.200"
                     transition="all 0.2s"
-                    _hover={{ borderColor: "purple.300", shadow: "md" }}
+                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -797,11 +739,7 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text
-                            fontWeight="bold"
-                            fontSize="lg"
-                            color="gray.800"
-                          >
+                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
                             Nota 3
                           </Text>
                           <Text fontSize="sm" color="gray.500">
@@ -820,8 +758,8 @@ export default function FuncionariosPage() {
                         color="gray.700"
                         borderWidth="2px"
                         _focus={{
-                          borderColor: "purple.500",
-                          shadow: "outline",
+                          borderColor: 'purple.500',
+                          shadow: 'outline',
                         }}
                         value={metricasForm.countNota3}
                         onChange={(e) =>
@@ -842,7 +780,7 @@ export default function FuncionariosPage() {
                     border="2px solid"
                     borderColor="gray.200"
                     transition="all 0.2s"
-                    _hover={{ borderColor: "purple.300", shadow: "md" }}
+                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -860,11 +798,7 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text
-                            fontWeight="bold"
-                            fontSize="lg"
-                            color="gray.800"
-                          >
+                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
                             Nota 2
                           </Text>
                           <Text fontSize="sm" color="gray.500">
@@ -883,8 +817,8 @@ export default function FuncionariosPage() {
                         color="gray.700"
                         borderWidth="2px"
                         _focus={{
-                          borderColor: "purple.500",
-                          shadow: "outline",
+                          borderColor: 'purple.500',
+                          shadow: 'outline',
                         }}
                         value={metricasForm.countNota2}
                         onChange={(e) =>
@@ -905,7 +839,7 @@ export default function FuncionariosPage() {
                     border="2px solid"
                     borderColor="gray.200"
                     transition="all 0.2s"
-                    _hover={{ borderColor: "purple.300", shadow: "md" }}
+                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -923,11 +857,7 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text
-                            fontWeight="bold"
-                            fontSize="lg"
-                            color="gray.800"
-                          >
+                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
                             Nota 1
                           </Text>
                           <Text fontSize="sm" color="gray.500">
@@ -946,8 +876,8 @@ export default function FuncionariosPage() {
                         color="gray.700"
                         borderWidth="2px"
                         _focus={{
-                          borderColor: "purple.500",
-                          shadow: "outline",
+                          borderColor: 'purple.500',
+                          shadow: 'outline',
                         }}
                         value={metricasForm.countNota1}
                         onChange={(e) =>
@@ -963,18 +893,12 @@ export default function FuncionariosPage() {
               </Box>
 
               {/* Informação */}
-              <Box
-                bg="blue.50"
-                p={4}
-                borderRadius="lg"
-                border="1px solid"
-                borderColor="blue.200"
-              >
+              <Box bg="blue.50" p={4} borderRadius="lg" border="1px solid" borderColor="blue.200">
                 <HStack gap={2}>
                   <Text fontSize="lg">💡</Text>
                   <Text fontSize="sm" color="blue.900">
-                    As métricas serão calculadas automaticamente e a comissão
-                    será definida com base nas regras configuradas no sistema.
+                    As métricas serão calculadas automaticamente e a comissão será definida com base
+                    nas regras configuradas no sistema.
                   </Text>
                 </HStack>
               </Box>
@@ -991,18 +915,14 @@ export default function FuncionariosPage() {
             bg="white"
             zIndex={1}
           >
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setIsMetricasDrawerOpen(false)}
-            >
+            <Button variant="outline" size="lg" onClick={() => setIsMetricasDrawerOpen(false)}>
               Cancelar
             </Button>
             <Button
               bg="purple.600"
               color="white"
               size="lg"
-              _hover={{ bg: "purple.700" }}
+              _hover={{ bg: 'purple.700' }}
               onClick={handleSaveMetricas}
               loading={savingMetricas}
             >
