@@ -280,7 +280,7 @@ export default function LoginPage() {
         {/* Card de Login */}
         <Box
           w="full"
-          maxW="480px"
+          maxW="420px"
           mx={4}
           position="relative"
           zIndex="1"
@@ -288,7 +288,7 @@ export default function LoginPage() {
         >
           <Box
             bg="white"
-            p={{ base: 8, md: 12 }}
+            p={{ base: 6, md: 8 }}
             borderRadius="3xl"
             boxShadow="0 20px 60px rgba(0, 0, 0, 0.3)"
             border="1px solid"
