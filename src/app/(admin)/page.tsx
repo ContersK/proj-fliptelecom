@@ -17,7 +17,6 @@ import {
   Input,
 } from "@chakra-ui/react";
 import {
-  AlertTriangle,
   CheckCircle2,
   Headphones,
   Wallet,
@@ -43,6 +42,8 @@ type Funcionario = {
   nome: string;
   turno: string;
   status: string;
+  setor?: { nome: string } | null;
+  cargo?: string | null;
 };
 
 type MetricasMensais = {
@@ -664,7 +665,7 @@ export default function DashboardSupport() {
                       fontSize: 13,
                       fontWeight: "bold",
                       offset: 5,
-                      formatter: (value: number) => `${value}%`,
+                      formatter: (value) => `${value}%`,
                     }}
                   >
                     {equipeOrdenada.map((entry, index) => (
