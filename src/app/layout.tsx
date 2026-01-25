@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Flip Telecom - Comissões",
   description: "Sistema de comissões da Flip Telecom",
+  icons: {
+    icon: "/logo-flip.png",
+  },
 };
 export default function RootLayout({
   children,

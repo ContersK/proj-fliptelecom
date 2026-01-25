@@ -1,47 +1,41 @@
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { hash } from "bcryptjs";
+import "dotenv/config";
 
-const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
+// Correção: Inicialização direta do adaptador com a configuração
+const adapter = new PrismaLibSql({
+  url: process.env.DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-// Cria adapter libsql diretamente via config (tipagem do pacote)
-const adapter = new PrismaLibSql({ url: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Iniciando o seed do banco de dados...");
+  console.log("🌱 [SEED] Iniciando...");
+  const passwordHash = await hash("1871Flip2@@@*", 10);
 
-  try {
-    // 1. Criptografar a senha padrão
-    const passwordHash = await hash("1871Flip2@@@*", 10);
+  // Criar Admin
+  await prisma.gerencia.upsert({
+    where: { email: "admin@fliptelecom.com.br" },
+    update: {},
+    create: {
+      email: "admin@fliptelecom.com.br",
+      name: "Super Admin",
+      password: passwordHash,
+      role: "ADMIN",
+    },
+  });
 
-    // 2. Criar (ou atualizar) o usuário Admin
-    const admin = await prisma.gerencia.upsert({
-      where: { email: "admin@fliptelecom.com.br" },
-      update: {}, // Se já existir, não faz nada
-      create: {
-        email: "admin@fliptelecom.com.br",
-        name: "Super Admin",
-        password: passwordHash, // Senha criptografada
-        role: "ADMIN",
-      },
-    });
-
-    console.log("✅ Usuário Admin criado/verificado:", admin);
-  } catch (error) {
-    console.error("❌ Erro no seed:", error);
-    throw error;
-  }
+  console.log("✅ Seed finalizado!");
 }
 
 main()
   .then(async () => {
     await prisma.$disconnect();
-    console.log("✅ Seed concluído com sucesso!");
   })
   .catch(async (e) => {
-    console.error("❌ Erro fatal:", e);
+    console.error(e);
     await prisma.$disconnect();
     process.exit(1);
   });
