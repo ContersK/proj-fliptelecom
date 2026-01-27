@@ -27,7 +27,10 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  Lock,
+  Unlock,
 } from 'lucide-react';
+import { useFlipTheme } from '@/hooks/useFlipTheme';
 
 type ComissaoRow = {
   id: string;
@@ -68,6 +71,7 @@ function calcularBonus(percentual: number) {
 }
 
 export default function ComissoesPage() {
+  const theme = useFlipTheme();
   const currentDate = new Date();
   const [referenceMonth, setReferenceMonth] = useState(() => {
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -79,7 +83,13 @@ export default function ComissoesPage() {
   const [turnoFilter, setTurnoFilter] = useState('todos');
   const [statusFilter, setStatusFilter] = useState('todos');
   const [closingPeriod, setClosingPeriod] = useState(false);
+  const [reopeningPeriod, setReopeningPeriod] = useState(false);
   const [userSetorId, setUserSetorId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('SUPERVISOR');
+  const [periodStatus, setPeriodStatus] = useState<{
+    isClosed: boolean;
+    stats: { total: number; pendentes: number; aprovados: number; reprovados: number };
+  } | null>(null);
 
   const { month, year, referenceLabel } = useMemo(() => {
     const [y, m] = referenceMonth.split('-').map(Number);
@@ -117,6 +127,7 @@ export default function ComissoesPage() {
           countNota3?: number;
           countNota2?: number;
           countNota1?: number;
+          statusComissao?: string;
           funcionario?: {
             id: string;
             nome: string;
@@ -187,14 +198,23 @@ export default function ComissoesPage() {
             // Precisa ter PELO MENOS a média de atendimentos do setor
             const atendeMinimo = atendimentos >= mediaSetor && mediaSetor > 0;
 
-            // Calcular status e bônus
-            let status: 'PENDENTE' | 'APROVADO' | 'REPROVADO' = 'REPROVADO';
+            // Usar status do banco se existir, senão calcular localmente
+            const statusFromDb = metrica.statusComissao as
+              | 'PENDENTE'
+              | 'APROVADO'
+              | 'REPROVADO'
+              | undefined;
+            let status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
             let bonus = 0;
 
-            if (atendeMinimo) {
-              // Se atingiu a média de atendimentos, está aprovado (mas pendente de fechamento)
-              status = 'PENDENTE';
-              bonus = calcularBonus(percentual);
+            if (statusFromDb && statusFromDb !== 'PENDENTE') {
+              // Se já foi fechado (APROVADO ou REPROVADO), usar o status do banco
+              status = statusFromDb;
+              bonus = status === 'APROVADO' ? calcularBonus(percentual) : 0;
+            } else {
+              // Período ainda aberto, calcular localmente
+              status = atendeMinimo ? 'PENDENTE' : 'REPROVADO';
+              bonus = atendeMinimo ? calcularBonus(percentual) : 0;
             }
 
             return {
@@ -231,7 +251,7 @@ export default function ComissoesPage() {
     };
   }, [month, year]);
 
-  // Buscar setorId do supervisor na inicialização
+  // Buscar setorId e role do supervisor na inicialização
   useEffect(() => {
     async function fetchUserSetor() {
       try {
@@ -239,6 +259,7 @@ export default function ComissoesPage() {
         if (res.ok) {
           const user = await res.json();
           setUserSetorId(user.setor?.id || null);
+          setUserRole(user.role || 'SUPERVISOR');
         }
       } catch (err) {
         console.error('Erro ao buscar setor do usuário:', err);
@@ -247,16 +268,33 @@ export default function ComissoesPage() {
     fetchUserSetor();
   }, []);
 
+  // Buscar status do período
+  useEffect(() => {
+    async function fetchPeriodStatus() {
+      try {
+        const res = await fetch(`/api/comissoes/fechar-periodo?month=${month}&year=${year}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPeriodStatus(data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar status do período:', err);
+      }
+    }
+    fetchPeriodStatus();
+  }, [month, year]);
+
   // Função para fechar o período
   const handleClosePeriod = async () => {
-    if (!userSetorId) {
+    // Admin pode fechar sem setor, supervisor precisa de setor
+    if (userRole !== 'ADMIN' && !userSetorId) {
       alert('Erro: Setor do supervisor não encontrado');
       return;
     }
 
     if (
       !window.confirm(
-        `Tem certeza que deseja fechar o período de ${referenceLabel}? Esta ação é irreversível e todos os status serão finalizados.`,
+        `Tem certeza que deseja fechar o período de ${referenceLabel}?\n\nTodas as comissões pendentes serão avaliadas e marcadas como APROVADAS ou REPROVADAS.`,
       )
     ) {
       return;
@@ -270,7 +308,7 @@ export default function ComissoesPage() {
         body: JSON.stringify({
           month,
           year,
-          setorId: userSetorId,
+          setorId: userRole === 'ADMIN' ? null : userSetorId,
         }),
       });
 
@@ -280,7 +318,9 @@ export default function ComissoesPage() {
       }
 
       const data = await res.json();
-      alert(`Período fechado com sucesso!\nMédia de atendimentos: ${data.mediaAtendimentos}`);
+      alert(
+        `✅ Período fechado com sucesso!\n\n📊 Resultados:\n• Aprovados: ${data.aprovados}\n• Reprovados: ${data.reprovados}`,
+      );
 
       // Recarregar dados para refletir as mudanças
       window.location.reload();
@@ -289,6 +329,52 @@ export default function ComissoesPage() {
       console.error(err);
     } finally {
       setClosingPeriod(false);
+    }
+  };
+
+  // Função para reabrir o período (apenas admin)
+  const handleReopenPeriod = async () => {
+    if (userRole !== 'ADMIN') {
+      alert('Apenas administradores podem reabrir períodos');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Tem certeza que deseja REABRIR o período de ${referenceLabel}?\n\nTodas as comissões voltarão para o status PENDENTE.`,
+      )
+    ) {
+      return;
+    }
+
+    setReopeningPeriod(true);
+    try {
+      const res = await fetch('/api/comissoes/fechar-periodo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          month,
+          year,
+          setorId: null, // Admin reabre para todos
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Erro ao reabrir período');
+      }
+
+      alert(
+        `✅ Período ${referenceLabel} reaberto com sucesso!\n\nTodas as comissões voltaram para PENDENTE.`,
+      );
+
+      // Recarregar dados
+      window.location.reload();
+    } catch (err) {
+      alert(`Erro ao reabrir período: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      console.error(err);
+    } finally {
+      setReopeningPeriod(false);
     }
   };
 
@@ -317,6 +403,54 @@ export default function ComissoesPage() {
     }
 
     setReferenceMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+  };
+
+  // Função para exportar dados para CSV
+  const handleExport = () => {
+    if (filteredData.length === 0) {
+      alert('Nenhum dado para exportar');
+      return;
+    }
+
+    // Cabeçalhos do CSV
+    const headers = [
+      'Funcionário',
+      'Setor',
+      'Turno',
+      'Atendimentos',
+      'Pontuação',
+      'Máx. Possível',
+      'Performance (%)',
+      'Status',
+      'Bônus (R$)',
+    ];
+
+    // Dados
+    const rows = filteredData.map((item) => [
+      item.name,
+      item.setor,
+      item.turno,
+      item.atendimentos,
+      item.pontuacao,
+      item.maxPossivel,
+      item.percentual,
+      item.status,
+      item.bonus,
+    ]);
+
+    // Criar CSV
+    const csvContent = [headers.join(';'), ...rows.map((row) => row.join(';'))].join('\n');
+
+    // Download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `comissoes_${referenceLabel.replace('/', '-')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Filtrar dados
@@ -348,131 +482,201 @@ export default function ComissoesPage() {
         {/* Cabeçalho */}
         <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
           <Box>
-            <Heading size="lg" color="gray.700">
+            <Heading size="lg" color={theme.textPrimary}>
               Gestão de Comissões
             </Heading>
-            <Text color="gray.500" fontSize="sm" mt={1}>
+            <Text color={theme.textSecondary} fontSize="sm" mt={1}>
               Controle e acompanhamento de pagamentos
             </Text>
           </Box>
           <HStack gap={3}>
-            <Button variant="outline" colorScheme="blue" size="md">
+            <Button variant="outline" colorScheme="blue" size="md" onClick={handleExport}>
               <Icon as={Download} boxSize={4} mr={2} />
               Exportar
             </Button>
-            <Button
-              colorScheme="purple"
-              size="md"
-              onClick={handleClosePeriod}
-              disabled={closingPeriod}
-            >
-              <Icon as={Calendar} boxSize={4} mr={2} />
-              {closingPeriod ? 'Fechando...' : 'Fechar Período'}
-            </Button>
+            {periodStatus?.isClosed && userRole === 'ADMIN' && (
+              <Button
+                colorScheme="orange"
+                size="md"
+                onClick={handleReopenPeriod}
+                disabled={reopeningPeriod}
+              >
+                <Icon as={Unlock} boxSize={4} mr={2} />
+                {reopeningPeriod ? 'Reabrindo...' : 'Reabrir Período'}
+              </Button>
+            )}
+            {periodStatus?.isClosed && (
+              <Badge colorScheme="green" fontSize="md" px={4} py={2} borderRadius="lg">
+                <Icon as={Lock} boxSize={4} mr={2} />
+                Período Fechado
+              </Badge>
+            )}
+            {!periodStatus?.isClosed && (
+              <Button
+                colorScheme="purple"
+                size="md"
+                onClick={handleClosePeriod}
+                disabled={closingPeriod}
+              >
+                <Icon as={Lock} boxSize={4} mr={2} />
+                {closingPeriod ? 'Fechando...' : 'Fechar Período'}
+              </Button>
+            )}
           </HStack>
         </Flex>
 
         {/* Cards de Resumo */}
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
           <Card.Root
-            bg="white"
+            bg={theme.bgCard}
             boxShadow="lg"
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
             _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
             <Box h="4px" bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                  <Text fontSize="xs" color={theme.textMuted} fontWeight="bold">
                     TOTAL A PAGAR
                   </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
+                  <Heading size="2xl" color={theme.textPrimary} mt={2}>
                     R$ {totalPagar.toLocaleString()}
                   </Heading>
                 </Box>
-                <Box bg="green.50" p={3} borderRadius="xl">
-                  <Icon as={DollarSign} color="green.600" boxSize={7} />
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'green.900' : 'green.50'}
+                  p={3}
+                  borderRadius="xl"
+                >
+                  <Icon as={DollarSign} color={theme.success} boxSize={7} />
                 </Box>
               </Flex>
             </Card.Body>
           </Card.Root>
 
           <Card.Root
-            bg="white"
+            bg={theme.bgCard}
             boxShadow="lg"
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
             _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
             <Box h="4px" bg="linear-gradient(90deg, #4299e1 0%, #3182ce 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                  <Text fontSize="xs" color={theme.textMuted} fontWeight="bold">
                     APROVADOS
                   </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
+                  <Heading size="2xl" color={theme.textPrimary} mt={2}>
                     {aprovados}
                   </Heading>
                 </Box>
-                <Box bg="blue.50" p={3} borderRadius="xl">
-                  <Icon as={Users} color="blue.600" boxSize={7} />
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'blue.900' : 'blue.50'}
+                  p={3}
+                  borderRadius="xl"
+                >
+                  <Icon as={Users} color={theme.brandPrimary} boxSize={7} />
                 </Box>
               </Flex>
             </Card.Body>
           </Card.Root>
 
           <Card.Root
-            bg="white"
+            bg={theme.bgCard}
             boxShadow="lg"
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
             _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
             <Box h="4px" bg="linear-gradient(90deg, #9f7aea 0%, #805ad5 100%)" />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                  <Text fontSize="xs" color={theme.textMuted} fontWeight="bold">
                     MÉDIA GERAL
                   </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
+                  <Heading size="2xl" color={theme.textPrimary} mt={2}>
                     {mediaPercentual}%
                   </Heading>
                 </Box>
-                <Box bg="purple.50" p={3} borderRadius="xl">
-                  <Icon as={TrendingUp} color="purple.600" boxSize={7} />
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'purple.900' : 'purple.50'}
+                  p={3}
+                  borderRadius="xl"
+                >
+                  <Icon as={TrendingUp} color="purple.400" boxSize={7} />
                 </Box>
               </Flex>
             </Card.Body>
           </Card.Root>
 
           <Card.Root
-            bg="white"
+            bg={theme.bgCard}
             boxShadow="lg"
             borderRadius="xl"
             overflow="hidden"
             transition="all 0.3s"
             _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
-            <Box h="4px" bg="linear-gradient(90deg, #ed8936 0%, #dd6b20 100%)" />
+            <Box
+              h="4px"
+              bg={
+                periodStatus?.isClosed
+                  ? 'linear-gradient(90deg, #48bb78 0%, #38a169 100%)'
+                  : 'linear-gradient(90deg, #ed8936 0%, #dd6b20 100%)'
+              }
+            />
             <Card.Body p={6}>
               <Flex justify="space-between" align="start">
                 <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                  <Text fontSize="xs" color={theme.textMuted} fontWeight="bold">
                     PERÍODO
                   </Text>
-                  <Heading size="xl" color="gray.800" mt={2}>
+                  <Heading size="xl" color={theme.textPrimary} mt={2}>
                     {referenceLabel}
                   </Heading>
+                  <Badge
+                    mt={2}
+                    colorScheme={periodStatus?.isClosed ? 'green' : 'orange'}
+                    variant="subtle"
+                    fontSize="xs"
+                  >
+                    {periodStatus?.isClosed ? '✓ Fechado' : '○ Aberto'}
+                  </Badge>
                 </Box>
-                <Box bg="orange.50" p={3} borderRadius="xl">
-                  <Icon as={Calendar} color="orange.600" boxSize={7} />
+                <Box
+                  bg={
+                    periodStatus?.isClosed
+                      ? theme.colorMode === 'dark'
+                        ? 'green.900'
+                        : 'green.50'
+                      : theme.colorMode === 'dark'
+                        ? 'orange.900'
+                        : 'orange.50'
+                  }
+                  p={3}
+                  borderRadius="xl"
+                >
+                  <Icon
+                    as={periodStatus?.isClosed ? Lock : Calendar}
+                    color={periodStatus?.isClosed ? theme.success : 'orange.400'}
+                    boxSize={7}
+                  />
                 </Box>
               </Flex>
             </Card.Body>
@@ -480,7 +684,13 @@ export default function ComissoesPage() {
         </SimpleGrid>
 
         {/* Navegação de Mês */}
-        <Card.Root bg="white" boxShadow="lg" borderRadius="xl">
+        <Card.Root
+          bg={theme.bgCard}
+          boxShadow="lg"
+          borderRadius="xl"
+          border="1px solid"
+          borderColor={theme.borderColor}
+        >
           <Card.Body p={6}>
             <Flex align="center" justify="space-between" gap={4}>
               <Button onClick={handlePreviousMonth} variant="ghost" colorScheme="blue" size="lg">
@@ -488,8 +698,8 @@ export default function ComissoesPage() {
               </Button>
 
               <Flex align="center" gap={4} flex="1" justify="center">
-                <Icon as={Calendar} boxSize={5} color="blue.600" />
-                <Heading size="lg" color="gray.700">
+                <Icon as={Calendar} boxSize={5} color={theme.brandPrimary} />
+                <Heading size="lg" color={theme.textPrimary}>
                   {referenceLabel}
                 </Heading>
               </Flex>
@@ -503,23 +713,23 @@ export default function ComissoesPage() {
 
         {/* Filtros */}
         <Box
-          bg="white"
+          bg={theme.bgCard}
           p={6}
           borderRadius="xl"
           boxShadow="lg"
           border="1px solid"
-          borderColor="gray.200"
+          borderColor={theme.borderColor}
         >
           <Flex align="center" gap={2} mb={4}>
-            <Icon as={Filter} color="gray.600" boxSize={5} />
-            <Heading size="md" color="gray.700">
+            <Icon as={Filter} color={theme.textSecondary} boxSize={5} />
+            <Heading size="md" color={theme.textPrimary}>
               Filtros Avançados
             </Heading>
           </Flex>
 
           <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={4}>
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+              <Text fontSize="sm" fontWeight="medium" mb={2} color={theme.textSecondary}>
                 Buscar Funcionário
               </Text>
               <Box position="relative">
@@ -527,26 +737,30 @@ export default function ComissoesPage() {
                   placeholder="Digite o nome..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  bg="gray.50"
+                  bg={theme.bgInput}
                   pl={10}
+                  color={theme.textPrimary}
+                  borderColor={theme.borderColor}
                 />
                 <Box position="absolute" left={3} top="50%" transform="translateY(-50%)">
-                  <Icon as={Search} color="gray.400" boxSize={4} />
+                  <Icon as={Search} color={theme.textMuted} boxSize={4} />
                 </Box>
               </Box>
             </Box>
 
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+              <Text fontSize="sm" fontWeight="medium" mb={2} color={theme.textSecondary}>
                 Setor
               </Text>
               <chakra.select
                 value={setorFilter}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) => setSetorFilter(e.target.value)}
-                bg="gray.50"
+                bg={theme.bgInput}
                 p={2}
                 borderRadius="md"
                 borderWidth="1px"
+                borderColor={theme.borderColor}
+                color={theme.textPrimary}
               >
                 <option value="todos">Todos os Setores</option>
                 {setores.map((setor) => (
@@ -558,16 +772,18 @@ export default function ComissoesPage() {
             </Box>
 
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+              <Text fontSize="sm" fontWeight="medium" mb={2} color={theme.textSecondary}>
                 Turno
               </Text>
               <chakra.select
                 value={turnoFilter}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) => setTurnoFilter(e.target.value)}
-                bg="gray.50"
+                bg={theme.bgInput}
                 p={2}
                 borderRadius="md"
                 borderWidth="1px"
+                borderColor={theme.borderColor}
+                color={theme.textPrimary}
               >
                 <option value="todos">Todos os Turnos</option>
                 {turnos.map((turno) => (
@@ -579,16 +795,18 @@ export default function ComissoesPage() {
             </Box>
 
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.600">
+              <Text fontSize="sm" fontWeight="medium" mb={2} color={theme.textSecondary}>
                 Status
               </Text>
               <chakra.select
                 value={statusFilter}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
-                bg="gray.50"
+                bg={theme.bgInput}
                 p={2}
                 borderRadius="md"
                 borderWidth="1px"
+                borderColor={theme.borderColor}
+                color={theme.textPrimary}
               >
                 <option value="todos">Todos os Status</option>
                 <option value="aprovado">Aprovados</option>
@@ -601,18 +819,18 @@ export default function ComissoesPage() {
 
         {/* Tabela */}
         <Box
-          bg="white"
+          bg={theme.bgCard}
           borderRadius="xl"
           boxShadow="lg"
           border="1px solid"
-          borderColor="gray.200"
+          borderColor={theme.borderColor}
           overflow="hidden"
         >
-          <Box p={6} borderBottom="1px solid" borderColor="gray.200">
-            <Heading size="md" color="gray.700">
+          <Box p={6} borderBottom="1px solid" borderColor={theme.borderLight}>
+            <Heading size="md" color={theme.textPrimary}>
               Registros de Comissões
             </Heading>
-            <Text fontSize="sm" color="gray.500" mt={1}>
+            <Text fontSize="sm" color={theme.textSecondary} mt={1}>
               {filteredData.length} registros encontrados
             </Text>
           </Box>
@@ -620,40 +838,70 @@ export default function ComissoesPage() {
           <Box overflowX="auto">
             <Table.Root size="sm">
               <Table.Header>
-                <Table.Row bg="gray.50">
-                  <Table.ColumnHeader fontWeight="bold">Funcionário</Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                <Table.Row bg={theme.bgSecondary}>
+                  <Table.ColumnHeader fontWeight="bold" color={theme.textSecondary}>
+                    Funcionário
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Setor/Turno
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Atendimentos
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Pontuação
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Máx. Possível
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Performance
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="center" fontWeight="bold">
+                  <Table.ColumnHeader
+                    textAlign="center"
+                    fontWeight="bold"
+                    color={theme.textSecondary}
+                  >
                     Status
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="end" fontWeight="bold">
+                  <Table.ColumnHeader textAlign="end" fontWeight="bold" color={theme.textSecondary}>
                     Bônus
                   </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
                 {filteredData.map((item) => (
-                  <Table.Row key={item.id} _hover={{ bg: 'gray.50' }} transition="all 0.2s">
+                  <Table.Row key={item.id} _hover={{ bg: theme.bgHover }} transition="all 0.2s">
                     <Table.Cell>
-                      <Text fontWeight="medium">{item.name}</Text>
+                      <Text fontWeight="medium" color={theme.textPrimary}>
+                        {item.name}
+                      </Text>
                     </Table.Cell>
                     <Table.Cell textAlign="center">
                       <VStack gap={1}>
-                        <Text fontSize="sm">{item.setor}</Text>
+                        <Text fontSize="sm" color={theme.textPrimary}>
+                          {item.setor}
+                        </Text>
                         <Badge
                           colorScheme={item.turno === 'A' ? 'purple' : 'cyan'}
                           variant="subtle"
@@ -664,14 +912,14 @@ export default function ComissoesPage() {
                       </VStack>
                     </Table.Cell>
                     <Table.Cell textAlign="center">
-                      <Text fontSize="sm" fontWeight="medium">
+                      <Text fontSize="sm" fontWeight="medium" color={theme.textPrimary}>
                         {item.atendimentos.toLocaleString('pt-BR')}
                       </Text>
                     </Table.Cell>
-                    <Table.Cell textAlign="center" fontWeight="bold" color="blue.600">
+                    <Table.Cell textAlign="center" fontWeight="bold" color={theme.brandPrimary}>
                       {item.pontuacao}
                     </Table.Cell>
-                    <Table.Cell textAlign="center" color="gray.500">
+                    <Table.Cell textAlign="center" color={theme.textMuted}>
                       <Text fontSize="sm">{item.maxPossivel}</Text>
                     </Table.Cell>
                     <Table.Cell textAlign="center">
@@ -708,7 +956,10 @@ export default function ComissoesPage() {
                       </Badge>
                     </Table.Cell>
                     <Table.Cell textAlign="end">
-                      <Text fontWeight="bold" color={item.bonus > 0 ? 'green.600' : 'gray.400'}>
+                      <Text
+                        fontWeight="bold"
+                        color={item.bonus > 0 ? theme.success : theme.textMuted}
+                      >
                         R$ {item.bonus.toLocaleString('pt-BR')}
                       </Text>
                     </Table.Cell>

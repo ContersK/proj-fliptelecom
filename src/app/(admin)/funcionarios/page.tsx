@@ -27,6 +27,7 @@ import {
   Grid,
 } from '@chakra-ui/react';
 import { Plus, Search, Edit2, Trash2, UserCheck, UserX, BarChart3 } from 'lucide-react';
+import { useFlipTheme } from '@/hooks/useFlipTheme';
 
 // Tipo do Funcionário
 interface Funcionario {
@@ -51,6 +52,7 @@ interface MetricasForm {
 }
 
 export default function FuncionariosPage() {
+  const theme = useFlipTheme();
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -214,18 +216,18 @@ export default function FuncionariosPage() {
       {/* CABEÇALHO DA PÁGINA */}
       <Flex justify="space-between" align="center" mb={8}>
         <Box>
-          <Heading size="lg" color="gray.700">
+          <Heading size="lg" color={theme.textPrimary}>
             Equipe
           </Heading>
-          <Text color="gray.500" fontSize="sm">
+          <Text color={theme.textSecondary} fontSize="sm">
             Gerencie seus colaboradores
           </Text>
         </Box>
         <Button
           onClick={() => handleOpenDrawer()}
-          bg="#0044CC"
+          bg={theme.brandPrimary}
           color="white"
-          _hover={{ bg: '#003399' }}
+          _hover={{ bg: theme.brandHover }}
           size="sm"
         >
           <Plus size={18} style={{ marginRight: 8 }} />
@@ -234,23 +236,34 @@ export default function FuncionariosPage() {
       </Flex>
 
       {/* BARRA DE FILTROS */}
-      <Box bg="white" p={4} borderRadius="xl" boxShadow="sm" mb={6}>
+      <Box
+        bg={theme.bgCard}
+        p={4}
+        borderRadius="xl"
+        boxShadow="sm"
+        mb={6}
+        border="1px solid"
+        borderColor={theme.borderColor}
+      >
         <HStack>
           <Box position="relative" w="300px">
             <Input
               placeholder="Buscar por nome..."
               ps={10}
-              bg="gray.50"
-              border="none"
+              bg={theme.bgInput}
+              border="1px solid"
+              borderColor={theme.borderColor}
+              color={theme.textPrimary}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              _placeholder={{ color: theme.textMuted }}
             />
             <Box
               position="absolute"
               left={3}
               top="50%"
               transform="translateY(-50%)"
-              color="gray.400"
+              color={theme.textMuted}
               pointerEvents="none"
             >
               <Search size={18} />
@@ -261,49 +274,55 @@ export default function FuncionariosPage() {
 
       {/* TABELA DE FUNCIONÁRIOS */}
       <Box
-        bg="white"
+        bg={theme.bgCard}
         borderRadius="xl"
         boxShadow="sm"
         overflow="hidden"
         border="1px solid"
-        borderColor="gray.100"
+        borderColor={theme.borderColor}
       >
         {loading ? (
           <Flex p={10} justify="center">
-            <Spinner color="blue.500" />
+            <Spinner color={theme.brandPrimary} />
           </Flex>
         ) : (
           <Table.Root size="md" interactive>
-            <Table.Header bg="gray.50">
+            <Table.Header bg={theme.bgSecondary}>
               <Table.Row>
-                <Table.ColumnHeader pl={6}>Colaborador</Table.ColumnHeader>
-                <Table.ColumnHeader>Cargo</Table.ColumnHeader>
-                <Table.ColumnHeader>Turno</Table.ColumnHeader>
-                <Table.ColumnHeader>Status</Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="end" pr={6}>
+                <Table.ColumnHeader pl={6} color={theme.textSecondary}>
+                  Colaborador
+                </Table.ColumnHeader>
+                <Table.ColumnHeader color={theme.textSecondary}>Cargo</Table.ColumnHeader>
+                <Table.ColumnHeader color={theme.textSecondary}>Turno</Table.ColumnHeader>
+                <Table.ColumnHeader color={theme.textSecondary}>Status</Table.ColumnHeader>
+                <Table.ColumnHeader textAlign="end" pr={6} color={theme.textSecondary}>
                   Ações
                 </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {filtered.map((func) => (
-                <Table.Row key={func.id} _hover={{ bg: 'gray.50' }}>
+                <Table.Row key={func.id} _hover={{ bg: theme.bgHover }}>
                   <Table.Cell pl={6}>
                     <HStack gap={3}>
-                      <Avatar.Root size="sm" bg="blue.100" color="blue.700">
+                      <Avatar.Root
+                        size="sm"
+                        bg={theme.colorMode === 'dark' ? 'blue.800' : 'blue.100'}
+                        color={theme.colorMode === 'dark' ? 'blue.200' : 'blue.700'}
+                      >
                         <Avatar.Fallback>{func.nome.substring(0, 2).toUpperCase()}</Avatar.Fallback>
                       </Avatar.Root>
                       <Box>
-                        <Text fontWeight="medium" color="gray.800">
+                        <Text fontWeight="medium" color={theme.textPrimary}>
                           {func.nome}
                         </Text>
-                        <Text fontSize="xs" color="gray.500">
+                        <Text fontSize="xs" color={theme.textMuted}>
                           {func.email || 'Sem email'}
                         </Text>
                       </Box>
                     </HStack>
                   </Table.Cell>
-                  <Table.Cell color="gray.600">{func.cargo}</Table.Cell>
+                  <Table.Cell color={theme.textSecondary}>{func.cargo}</Table.Cell>
                   <Table.Cell>
                     <Badge variant="subtle" colorPalette="blue">
                       {func.turno}
@@ -325,7 +344,10 @@ export default function FuncionariosPage() {
                         variant="ghost"
                         size="sm"
                         color="purple.500"
-                        _hover={{ color: 'purple.600', bg: 'purple.50' }}
+                        _hover={{
+                          color: 'purple.600',
+                          bg: theme.colorMode === 'dark' ? 'purple.900' : 'purple.50',
+                        }}
                         onClick={() => handleOpenMetricas(func)}
                       >
                         <BarChart3 size={16} />
@@ -334,7 +356,7 @@ export default function FuncionariosPage() {
                         aria-label="Editar"
                         variant="ghost"
                         size="sm"
-                        color="gray.500"
+                        color={theme.textMuted}
                         onClick={() => handleOpenDrawer(func)}
                       >
                         <Edit2 size={16} />
@@ -344,7 +366,10 @@ export default function FuncionariosPage() {
                         variant="ghost"
                         size="sm"
                         color="red.400"
-                        _hover={{ color: 'red.600', bg: 'red.50' }}
+                        _hover={{
+                          color: 'red.600',
+                          bg: theme.colorMode === 'dark' ? 'red.900' : 'red.50',
+                        }}
                         onClick={() => handleDelete(func.id)}
                       >
                         <Trash2 size={16} />
@@ -363,48 +388,57 @@ export default function FuncionariosPage() {
       <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
         <Drawer.Backdrop />
         <Drawer.Positioner>
-          <Drawer.Content>
-            <Drawer.Header borderBottom="1px solid" borderColor="gray.100" pb={4}>
-              <Drawer.Title>{editingId ? 'Editar Funcionário' : 'Novo Colaborador'}</Drawer.Title>
+          <Drawer.Content bg={theme.bgCard}>
+            <Drawer.Header borderBottom="1px solid" borderColor={theme.borderColor} pb={4}>
+              <Drawer.Title color={theme.textPrimary}>
+                {editingId ? 'Editar Funcionário' : 'Novo Colaborador'}
+              </Drawer.Title>
               <Drawer.CloseTrigger />
             </Drawer.Header>
 
             <Drawer.Body py={6}>
               <VStack gap={5} align="stretch">
                 <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={1}>
+                  <Text fontSize="sm" fontWeight="medium" mb={1} color={theme.textSecondary}>
                     Nome Completo
                   </Text>
                   <Input
                     value={formData.nome}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     placeholder="Ex: Rafael Alencar"
+                    bg={theme.bgInput}
+                    color={theme.textPrimary}
+                    borderColor={theme.borderColor}
                   />
                 </Box>
 
                 <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={1}>
+                  <Text fontSize="sm" fontWeight="medium" mb={1} color={theme.textSecondary}>
                     Email Corporativo
                   </Text>
                   <Input
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="email@flip.com"
+                    bg={theme.bgInput}
+                    color={theme.textPrimary}
+                    borderColor={theme.borderColor}
                   />
                 </Box>
 
                 <HStack gap={4}>
                   <Box flex={1}>
-                    <Text fontSize="sm" fontWeight="medium" mb={1}>
+                    <Text fontSize="sm" fontWeight="medium" mb={1} color={theme.textSecondary}>
                       Turno
                     </Text>
-                    {/* Select simples nativo para evitar complexidade do v3 agora */}
                     <select
                       style={{
                         width: '100%',
                         padding: '8px',
                         borderRadius: '6px',
-                        border: '1px solid #E2E8F0',
+                        border: `1px solid ${theme.borderColor}`,
+                        backgroundColor: theme.bgInput,
+                        color: theme.textPrimary,
                       }}
                       value={formData.turno}
                       onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
@@ -416,18 +450,21 @@ export default function FuncionariosPage() {
                     </select>
                   </Box>
                   <Box flex={1}>
-                    <Text fontSize="sm" fontWeight="medium" mb={1}>
+                    <Text fontSize="sm" fontWeight="medium" mb={1} color={theme.textSecondary}>
                       Cargo
                     </Text>
                     <Input
                       value={formData.cargo}
                       onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+                      bg={theme.bgInput}
+                      color={theme.textPrimary}
+                      borderColor={theme.borderColor}
                     />
                   </Box>
                 </HStack>
 
                 <Box>
-                  <Text fontSize="sm" fontWeight="medium" mb={1}>
+                  <Text fontSize="sm" fontWeight="medium" mb={1} color={theme.textSecondary}>
                     Status
                   </Text>
                   <HStack gap={3}>
@@ -452,11 +489,11 @@ export default function FuncionariosPage() {
               </VStack>
             </Drawer.Body>
 
-            <Drawer.Footer borderTop="1px solid" borderColor="gray.100" pt={4}>
+            <Drawer.Footer borderTop="1px solid" borderColor={theme.borderColor} pt={4}>
               <Button variant="outline" mr={3} onClick={() => setIsDrawerOpen(false)}>
                 Cancelar
               </Button>
-              <Button bg="#0044CC" color="white" onClick={handleSave} loading={saving}>
+              <Button bg={theme.brandPrimary} color="white" onClick={handleSave} loading={saving}>
                 {editingId ? 'Salvar Alterações' : 'Cadastrar'}
               </Button>
             </Drawer.Footer>
@@ -479,17 +516,18 @@ export default function FuncionariosPage() {
           flexDirection="column"
           overflow="hidden"
           my="auto"
+          bg={theme.bgCard}
         >
           <DialogHeader
             borderBottom="1px solid"
-            borderColor="gray.200"
+            borderColor={theme.borderColor}
             py={4}
             px={6}
             flexShrink={0}
-            bg="white"
+            bg={theme.bgCard}
             zIndex={1}
           >
-            <DialogTitle fontSize="xl" fontWeight="bold" color="gray.800">
+            <DialogTitle fontSize="xl" fontWeight="bold" color={theme.textPrimary}>
               Registrar Notas - {metricasForm.funcionarioNome}
             </DialogTitle>
             <DialogCloseTrigger />
@@ -505,14 +543,14 @@ export default function FuncionariosPage() {
                 width: '8px',
               },
               '&::-webkit-scrollbar-track': {
-                background: '#f1f1f1',
+                background: theme.bgSecondary,
               },
               '&::-webkit-scrollbar-thumb': {
-                background: '#888',
+                background: theme.textMuted,
                 borderRadius: '4px',
               },
               '&::-webkit-scrollbar-thumb:hover': {
-                background: '#555',
+                background: theme.textSecondary,
               },
             }}
           >
@@ -523,7 +561,7 @@ export default function FuncionariosPage() {
                   fontSize="sm"
                   fontWeight="semibold"
                   mb={3}
-                  color="gray.700"
+                  color={theme.textSecondary}
                   textTransform="uppercase"
                   letterSpacing="wider"
                 >
@@ -531,7 +569,7 @@ export default function FuncionariosPage() {
                 </Text>
                 <Grid templateColumns="repeat(2, 1fr)" gap={4}>
                   <Box>
-                    <Text fontSize="sm" mb={2} fontWeight="medium">
+                    <Text fontSize="sm" mb={2} fontWeight="medium" color={theme.textSecondary}>
                       Mês
                     </Text>
                     <select
@@ -540,8 +578,9 @@ export default function FuncionariosPage() {
                         padding: '12px',
                         fontSize: '15px',
                         borderRadius: '8px',
-                        border: '2px solid #E2E8F0',
-                        backgroundColor: 'white',
+                        border: `2px solid ${theme.borderColor}`,
+                        backgroundColor: theme.bgInput,
+                        color: theme.textPrimary,
                         cursor: 'pointer',
                       }}
                       value={metricasForm.month}
@@ -562,7 +601,7 @@ export default function FuncionariosPage() {
                     </select>
                   </Box>
                   <Box>
-                    <Text fontSize="sm" mb={2} fontWeight="medium">
+                    <Text fontSize="sm" mb={2} fontWeight="medium" color={theme.textSecondary}>
                       Ano
                     </Text>
                     <Input
@@ -570,6 +609,9 @@ export default function FuncionariosPage() {
                       size="lg"
                       fontSize="15px"
                       value={metricasForm.year}
+                      bg={theme.bgInput}
+                      color={theme.textPrimary}
+                      borderColor={theme.borderColor}
                       onChange={(e) =>
                         setMetricasForm({
                           ...metricasForm,
@@ -587,7 +629,7 @@ export default function FuncionariosPage() {
                   fontSize="sm"
                   fontWeight="semibold"
                   mb={3}
-                  color="gray.700"
+                  color={theme.textSecondary}
                   textTransform="uppercase"
                   letterSpacing="wider"
                 >
@@ -597,13 +639,13 @@ export default function FuncionariosPage() {
                 <VStack gap={3} align="stretch">
                   {/* Nota 5 */}
                   <Box
-                    bg="white"
+                    bg={theme.bgSecondary}
                     p={4}
                     borderRadius="lg"
                     border="2px solid"
-                    borderColor="gray.200"
+                    borderColor={theme.borderColor}
                     transition="all 0.2s"
-                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
+                    _hover={{ borderColor: theme.brandPrimary, shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -621,10 +663,10 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                          <Text fontWeight="bold" fontSize="lg" color={theme.textPrimary}>
                             Nota 5
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color={theme.textMuted}>
                             Excelente
                           </Text>
                         </VStack>
@@ -637,10 +679,12 @@ export default function FuncionariosPage() {
                         fontSize="24px"
                         textAlign="center"
                         fontWeight="bold"
-                        color="gray.700"
+                        color={theme.textPrimary}
+                        bg={theme.bgInput}
                         borderWidth="2px"
+                        borderColor={theme.borderColor}
                         _focus={{
-                          borderColor: 'purple.500',
+                          borderColor: theme.brandPrimary,
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota5}
@@ -656,13 +700,13 @@ export default function FuncionariosPage() {
 
                   {/* Nota 4 */}
                   <Box
-                    bg="white"
+                    bg={theme.bgSecondary}
                     p={4}
                     borderRadius="lg"
                     border="2px solid"
-                    borderColor="gray.200"
+                    borderColor={theme.borderColor}
                     transition="all 0.2s"
-                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
+                    _hover={{ borderColor: theme.brandPrimary, shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -680,10 +724,10 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                          <Text fontWeight="bold" fontSize="lg" color={theme.textPrimary}>
                             Nota 4
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color={theme.textMuted}>
                             Muito Bom
                           </Text>
                         </VStack>
@@ -696,10 +740,12 @@ export default function FuncionariosPage() {
                         fontSize="24px"
                         textAlign="center"
                         fontWeight="bold"
-                        color="gray.700"
+                        color={theme.textPrimary}
+                        bg={theme.bgInput}
                         borderWidth="2px"
+                        borderColor={theme.borderColor}
                         _focus={{
-                          borderColor: 'purple.500',
+                          borderColor: theme.brandPrimary,
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota4}
@@ -715,13 +761,13 @@ export default function FuncionariosPage() {
 
                   {/* Nota 3 */}
                   <Box
-                    bg="white"
+                    bg={theme.bgSecondary}
                     p={4}
                     borderRadius="lg"
                     border="2px solid"
-                    borderColor="gray.200"
+                    borderColor={theme.borderColor}
                     transition="all 0.2s"
-                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
+                    _hover={{ borderColor: theme.brandPrimary, shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -739,10 +785,10 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                          <Text fontWeight="bold" fontSize="lg" color={theme.textPrimary}>
                             Nota 3
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color={theme.textMuted}>
                             Regular
                           </Text>
                         </VStack>
@@ -755,10 +801,12 @@ export default function FuncionariosPage() {
                         fontSize="24px"
                         textAlign="center"
                         fontWeight="bold"
-                        color="gray.700"
+                        color={theme.textPrimary}
+                        bg={theme.bgInput}
                         borderWidth="2px"
+                        borderColor={theme.borderColor}
                         _focus={{
-                          borderColor: 'purple.500',
+                          borderColor: theme.brandPrimary,
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota3}
@@ -774,13 +822,13 @@ export default function FuncionariosPage() {
 
                   {/* Nota 2 */}
                   <Box
-                    bg="white"
+                    bg={theme.bgSecondary}
                     p={4}
                     borderRadius="lg"
                     border="2px solid"
-                    borderColor="gray.200"
+                    borderColor={theme.borderColor}
                     transition="all 0.2s"
-                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
+                    _hover={{ borderColor: theme.brandPrimary, shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -798,10 +846,10 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                          <Text fontWeight="bold" fontSize="lg" color={theme.textPrimary}>
                             Nota 2
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color={theme.textMuted}>
                             Ruim
                           </Text>
                         </VStack>
@@ -814,10 +862,12 @@ export default function FuncionariosPage() {
                         fontSize="24px"
                         textAlign="center"
                         fontWeight="bold"
-                        color="gray.700"
+                        color={theme.textPrimary}
+                        bg={theme.bgInput}
                         borderWidth="2px"
+                        borderColor={theme.borderColor}
                         _focus={{
-                          borderColor: 'purple.500',
+                          borderColor: theme.brandPrimary,
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota2}
@@ -833,13 +883,13 @@ export default function FuncionariosPage() {
 
                   {/* Nota 1 */}
                   <Box
-                    bg="white"
+                    bg={theme.bgSecondary}
                     p={4}
                     borderRadius="lg"
                     border="2px solid"
-                    borderColor="gray.200"
+                    borderColor={theme.borderColor}
                     transition="all 0.2s"
-                    _hover={{ borderColor: 'purple.300', shadow: 'md' }}
+                    _hover={{ borderColor: theme.brandPrimary, shadow: 'md' }}
                   >
                     <Flex justify="space-between" align="center" gap={4}>
                       <HStack gap={4} flex={1}>
@@ -857,10 +907,10 @@ export default function FuncionariosPage() {
                           <Text fontSize="2xl">⭐</Text>
                         </Box>
                         <VStack align="start" gap={0.5}>
-                          <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                          <Text fontWeight="bold" fontSize="lg" color={theme.textPrimary}>
                             Nota 1
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color={theme.textMuted}>
                             Muito Ruim
                           </Text>
                         </VStack>
@@ -873,10 +923,12 @@ export default function FuncionariosPage() {
                         fontSize="24px"
                         textAlign="center"
                         fontWeight="bold"
-                        color="gray.700"
+                        color={theme.textPrimary}
+                        bg={theme.bgInput}
                         borderWidth="2px"
+                        borderColor={theme.borderColor}
                         _focus={{
-                          borderColor: 'purple.500',
+                          borderColor: theme.brandPrimary,
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota1}
@@ -893,10 +945,16 @@ export default function FuncionariosPage() {
               </Box>
 
               {/* Informação */}
-              <Box bg="blue.50" p={4} borderRadius="lg" border="1px solid" borderColor="blue.200">
+              <Box
+                bg={theme.colorMode === 'dark' ? 'blue.900' : 'blue.50'}
+                p={4}
+                borderRadius="lg"
+                border="1px solid"
+                borderColor={theme.colorMode === 'dark' ? 'blue.700' : 'blue.200'}
+              >
                 <HStack gap={2}>
                   <Text fontSize="lg">💡</Text>
-                  <Text fontSize="sm" color="blue.900">
+                  <Text fontSize="sm" color={theme.colorMode === 'dark' ? 'blue.100' : 'blue.900'}>
                     As métricas serão calculadas automaticamente e a comissão será definida com base
                     nas regras configuradas no sistema.
                   </Text>
@@ -907,22 +965,28 @@ export default function FuncionariosPage() {
 
           <DialogFooter
             borderTop="1px solid"
-            borderColor="gray.200"
+            borderColor={theme.borderColor}
             py={4}
             px={6}
             gap={3}
             flexShrink={0}
-            bg="white"
+            bg={theme.bgCard}
             zIndex={1}
           >
-            <Button variant="outline" size="lg" onClick={() => setIsMetricasDrawerOpen(false)}>
+            <Button
+              variant="outline"
+              size="lg"
+              borderColor={theme.borderColor}
+              color={theme.textPrimary}
+              onClick={() => setIsMetricasDrawerOpen(false)}
+            >
               Cancelar
             </Button>
             <Button
-              bg="purple.600"
+              bg={theme.brandPrimary}
               color="white"
               size="lg"
-              _hover={{ bg: 'purple.700' }}
+              _hover={{ bg: theme.brandHover }}
               onClick={handleSaveMetricas}
               loading={savingMetricas}
             >

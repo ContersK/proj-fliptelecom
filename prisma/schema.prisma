@@ -1,7 +1,6 @@
 // Configuração do Cliente (Quem gera o TypeScript)
 generator client {
   provider = "prisma-client-js"
-  // Removi o output personalizado para facilitar seus imports
 }
 
 // Configuração do Banco de Dados
@@ -20,6 +19,11 @@ model Gerencia {
 
   // Relação: Um usuário pode gerenciar um setor
   managedSetor Setor?
+  
+  // Notificações criadas por este usuário (admin)
+  notificacoesCriadas   Notificacao[] @relation("NotificacoesCriadas")
+  // Notificações recebidas por este usuário
+  notificacoesRecebidas Notificacao[] @relation("NotificacoesRecebidas")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,4 +94,21 @@ model RegrasDeComissao {
 
   setorId String
   setor   Setor  @relation(fields: [setorId], references: [id])
+}
+
+model Notificacao {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   @default("info") // "info", "warning", "success", "error"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  // Quem criou a notificação (admin)
+  createdById String?
+  createdBy   Gerencia? @relation("NotificacoesCriadas", fields: [createdById], references: [id])
+  
+  // Para quem é a notificação (se null = para todos supervisores)
+  targetId    String?
+  target      Gerencia? @relation("NotificacoesRecebidas", fields: [targetId], references: [id])
 }

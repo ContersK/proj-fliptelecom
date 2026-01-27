@@ -6,7 +6,6 @@ import {
   HStack,
   Text,
   Icon,
-  Flex,
   Image,
   Spacer,
   IconButton,
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useFlipTheme } from '@/hooks/useFlipTheme';
 
 const MENU_ITEMS = [
   { name: 'Principal', icon: LayoutDashboard, path: '/' },
@@ -32,75 +31,84 @@ const MENU_ITEMS = [
 ];
 
 interface SidebarProps {
-  onToggle?: (collapsed: boolean) => void;
+  isCollapsed: boolean;
+  onToggle: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ onToggle }: SidebarProps) {
+export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const theme = useFlipTheme();
 
   function handleCollapse() {
-    const newState = !collapsed;
-    setCollapsed(newState);
-    if (onToggle) onToggle(newState);
+    onToggle(!isCollapsed);
   }
 
   return (
     <Box
       as="aside"
-      w={collapsed ? '80px' : '280px'}
+      w={isCollapsed ? '80px' : '280px'}
       h="100vh"
-      bg="#0044CC"
+      bg={
+        theme.colorMode === 'dark'
+          ? 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)'
+          : 'linear-gradient(180deg, #0052cc 0%, #003d99 100%)'
+      }
       color="white"
       position="fixed"
       left={0}
       top={0}
       zIndex={100}
       transition="width 0.3s ease"
-      borderRight="1px solid rgba(255,255,255,0.1)"
+      boxShadow="4px 0 15px rgba(0, 0, 0, 0.15)"
       display={{ base: 'none', md: 'block' }}
     >
       <VStack h="full" align="stretch" gap={0}>
-        {/* CABEÇALHO */}
-        <Flex
-          h="80px"
-          align="center"
-          justify="center" // Sempre centralizado agora
-          px={collapsed ? 2 : 4}
+        {/* CABEÇALHO - LOGO */}
+        <Box
           bg="white"
+          m={isCollapsed ? 2 : 4}
+          mt={4}
+          borderRadius="2xl"
+          p={isCollapsed ? 3 : 4}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          boxShadow="0 8px 32px rgba(0,0,0,0.25)"
+          transition="all 0.3s ease"
         >
-          {/* LÓGICA DA LOGO ALTERADA AQUI */}
           <Image
             src="/logo-flip.png"
             alt="Flip Telecom"
-            // Se recolhido: altura 30px (menor). Se aberto: altura 50px (maior)
-            h={collapsed ? '30px' : '50px'}
+            h={isCollapsed ? '35px' : '55px'}
             w="auto"
             objectFit="contain"
-            transition="height 0.3s ease" // Animação suave ao trocar de tamanho
+            transition="height 0.3s ease"
           />
-        </Flex>
+        </Box>
 
         {/* BOTÃO DE CONTROLE */}
-        <Box position="absolute" right="-12px" top="94px" zIndex={110}>
+        <Box position="absolute" right="-12px" top={isCollapsed ? '75px' : '120px'} zIndex={110}>
           <IconButton
             aria-label="Toggle Sidebar"
             onClick={handleCollapse}
             size="xs"
             rounded="full"
-            bg="blue.500"
-            color="white"
+            bg={theme.bgNavbar}
+            color={theme.brandPrimary}
+            border="1px solid"
+            borderColor={theme.borderColor}
             shadow="md"
-            _hover={{ bg: 'blue.600' }}
+            _hover={{ bg: theme.bgHover, transform: 'scale(1.05)' }}
+            transition="all 0.2s"
           >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </IconButton>
         </Box>
 
         {/* MENU */}
-        <VStack align="stretch" gap={2} p={collapsed ? 2 : 4} mt={4}>
-          {!collapsed && (
-            <Text fontSize="xs" fontWeight="bold" opacity={0.6} pl={4} mb={2}>
+        <VStack align="stretch" gap={1} p={isCollapsed ? 2 : 4} mt={4}>
+          {!isCollapsed && (
+            <Text fontSize="xs" fontWeight="bold" opacity={0.5} pl={4} mb={2} letterSpacing="wider">
               MENU
             </Text>
           )}
@@ -110,28 +118,35 @@ export function Sidebar({ onToggle }: SidebarProps) {
 
             const LinkContent = (
               <HStack
-                px={collapsed ? 0 : 4}
-                justify={collapsed ? 'center' : 'flex-start'}
+                px={isCollapsed ? 0 : 4}
+                justify={isCollapsed ? 'center' : 'flex-start'}
                 h="48px"
-                borderRadius="lg"
+                borderRadius="xl"
                 cursor="pointer"
                 transition="all 0.2s"
-                bg={isActive ? 'white' : 'transparent'}
-                color={isActive ? '#0044CC' : 'white'}
-                _hover={{ bg: isActive ? 'white' : 'rgba(255,255,255,0.1)' }}
+                bg={isActive ? 'rgba(255,255,255,0.2)' : 'transparent'}
+                color="white"
+                fontWeight={isActive ? 'semibold' : 'normal'}
+                _hover={{ bg: 'rgba(255,255,255,0.15)', transform: 'translateX(4px)' }}
                 position="relative"
                 w="full"
               >
+                {isActive && (
+                  <Box
+                    position="absolute"
+                    left={0}
+                    top="50%"
+                    transform="translateY(-50%)"
+                    w="4px"
+                    h="60%"
+                    bg="white"
+                    borderRadius="full"
+                  />
+                )}
                 <Icon as={item.icon} boxSize={5} />
 
-                {!collapsed && (
-                  <Text
-                    fontWeight="medium"
-                    fontSize="sm"
-                    whiteSpace="nowrap"
-                    animation="fadeIn 0.2s"
-                    ml={3}
-                  >
+                {!isCollapsed && (
+                  <Text fontSize="sm" whiteSpace="nowrap" ml={3}>
                     {item.name}
                   </Text>
                 )}
@@ -144,7 +159,7 @@ export function Sidebar({ onToggle }: SidebarProps) {
                 key={item.path}
                 style={{ textDecoration: 'none', width: '100%' }}
               >
-                {collapsed ? (
+                {isCollapsed ? (
                   <Tooltip.Root>
                     <Tooltip.Trigger asChild>
                       <Box>{LinkContent}</Box>
@@ -153,10 +168,11 @@ export function Sidebar({ onToggle }: SidebarProps) {
                       <Tooltip.Content
                         bg="gray.800"
                         color="white"
-                        px={2}
-                        py={1}
-                        rounded="md"
-                        fontSize="xs"
+                        px={3}
+                        py={2}
+                        rounded="lg"
+                        fontSize="sm"
+                        shadow="lg"
                       >
                         {item.name}
                       </Tooltip.Content>
@@ -174,8 +190,8 @@ export function Sidebar({ onToggle }: SidebarProps) {
 
         {/* RODAPÉ */}
         <Box p={4} borderTop="1px solid rgba(255,255,255,0.1)">
-          {!collapsed && (
-            <Text fontSize="10px" textAlign="center" opacity={0.4}>
+          {!isCollapsed && (
+            <Text fontSize="10px" textAlign="center" opacity={0.5} letterSpacing="wide">
               v1.0
             </Text>
           )}

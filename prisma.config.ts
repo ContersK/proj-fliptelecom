@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 
 const prismaConfig = {
   migrations: {
@@ -6,7 +7,8 @@ const prismaConfig = {
     seed: 'npx tsx prisma/seed.ts',
   },
   datasource: {
-    url: process.env.DATABASE_URL,
+    // Use local SQLite for migrations
+    url: `file:${path.resolve(__dirname, 'prisma/dev.db')}`,
   },
 };
 

@@ -4,14 +4,19 @@ import { Box } from '@chakra-ui/react';
 import { Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
+import { useFlipTheme } from '@/hooks/useFlipTheme';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const theme = useFlipTheme();
 
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg={theme.bgPrimary} transition="background 0.3s ease">
       {/* Sidebar */}
-      <Sidebar onToggle={(collapsed) => setSidebarCollapsed(collapsed)} />
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={(collapsed) => setSidebarCollapsed(collapsed)}
+      />
 
       {/* Conteúdo com margem dinâmica */}
       <Box

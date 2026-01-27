@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Box,
   SimpleGrid,
@@ -14,16 +13,20 @@ import {
   Heading,
   Card,
   Table,
-  Input,
+  Avatar,
+  Popover,
+  Button,
 } from '@chakra-ui/react';
 import {
   CheckCircle2,
   Headphones,
-  Wallet,
   TrendingUp,
   Award,
+  Users,
+  Trophy,
   Calendar,
-  XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   BarChart,
@@ -36,6 +39,7 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
+import { useFlipTheme } from '@/hooks/useFlipTheme';
 
 type Funcionario = {
   id: string;
@@ -95,17 +99,23 @@ function calcularBonus(percentual: number) {
 }
 
 export default function DashboardSupport() {
-  const router = useRouter();
+  const theme = useFlipTheme();
   const [referenceMonth, setReferenceMonth] = useState(() => {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     return `${now.getFullYear()}-${month}`;
   });
   const [equipeMetrics, setEquipeMetrics] = useState<DashboardRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cardBg = 'white';
-  const borderColor = 'gray.200';
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+
+  // Anos disponíveis
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return [currentYear - 1, currentYear, currentYear + 1];
+  }, []);
 
   const { month, year, referenceLabel } = useMemo(() => {
     const [y, m] = referenceMonth.split('-').map(Number);
@@ -265,344 +275,343 @@ export default function DashboardSupport() {
 
   return (
     <Box>
-      <VStack gap={8} align="stretch">
-        {/* CABEÇALHO PREMIUM */}
+      <VStack gap={6} align="stretch">
+        {/* HEADER AZUL SIMPLIFICADO */}
         <Box
-          bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-          p={8}
-          borderRadius="2xl"
-          boxShadow="xl"
-          position="relative"
-          overflow="hidden"
+          bg="linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)"
+          p={6}
+          borderRadius="xl"
+          boxShadow="lg"
         >
-          <Box
-            position="absolute"
-            top="-50px"
-            right="-50px"
-            w="200px"
-            h="200px"
-            bg="whiteAlpha.100"
-            borderRadius="full"
-          />
-          <Box
-            position="absolute"
-            bottom="-30px"
-            left="-30px"
-            w="150px"
-            h="150px"
-            bg="whiteAlpha.100"
-            borderRadius="full"
-          />
-
-          <Flex justify="space-between" align="center" wrap="wrap" gap={4} position="relative">
-            <Box>
-              <HStack mb={2}>
-                <Icon as={Headphones} color="white" boxSize={8} />
-                <Heading size="xl" color="white">
-                  Monitoramento N1
+          <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
+            <HStack gap={4}>
+              <Box bg="whiteAlpha.200" p={3} borderRadius="xl">
+                <Icon as={Headphones} color="white" boxSize={6} />
+              </Box>
+              <Box>
+                <Heading size="lg" color="white" fontWeight="bold">
+                  Dashboard do Suporte Técnico
                 </Heading>
-              </HStack>
-              <Text color="whiteAlpha.900" fontSize="md" fontWeight="medium">
-                Dashboard de Qualidade & Performance
-              </Text>
-            </Box>
-            <VStack align="end" gap={1}>
-              <HStack
-                bg="whiteAlpha.200"
-                backdropFilter="blur(10px)"
-                px={5}
-                py={3}
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="whiteAlpha.300"
-              >
-                <Icon as={Calendar} color="white" boxSize={5} />
-                <Box textAlign="right">
+                <Text color="whiteAlpha.800" fontSize="sm">
+                  Para monitoramento das comissões da equipe
+                </Text>
+              </Box>
+            </HStack>
+
+            <Popover.Root
+              positioning={{ placement: 'bottom-end' }}
+              open={isMonthPickerOpen}
+              onOpenChange={(details) => setIsMonthPickerOpen(details.open)}
+            >
+              <Popover.Trigger asChild>
+                <HStack
+                  bg="whiteAlpha.200"
+                  px={4}
+                  py={2}
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor="whiteAlpha.300"
+                  cursor="pointer"
+                  _hover={{ bg: 'whiteAlpha.300' }}
+                  transition="all 0.2s"
+                >
+                  <Icon as={Calendar} color="white" boxSize={4} />
                   <Text fontSize="xs" color="whiteAlpha.800" fontWeight="medium">
                     PERÍODO DE REFERÊNCIA
                   </Text>
-                  <Text fontSize="md" fontWeight="bold" color="white">
+                  <Badge bg="blue.400" color="white" px={3} py={1} borderRadius="md" fontSize="sm">
                     {referenceLabel}
-                  </Text>
-                </Box>
-                <Input
-                  type="month"
-                  value={referenceMonth}
-                  onChange={(event) => setReferenceMonth(event.target.value)}
-                  disabled={loading}
-                  size="sm"
-                  w="150px"
-                  bg="whiteAlpha.200"
-                  borderColor="whiteAlpha.400"
-                  color="white"
-                  _placeholder={{ color: 'whiteAlpha.700' }}
-                />
-              </HStack>
-              {error && (
-                <Text fontSize="xs" color="red.100">
-                  {error}
-                </Text>
-              )}
-            </VStack>
+                  </Badge>
+                </HStack>
+              </Popover.Trigger>
+
+              <Popover.Positioner>
+                <Popover.Content
+                  bg={theme.bgCard}
+                  borderRadius="xl"
+                  boxShadow="2xl"
+                  w="280px"
+                  overflow="hidden"
+                  border="1px solid"
+                  borderColor={theme.borderColor}
+                >
+                  <Popover.Arrow />
+                  <Popover.Body p={0}>
+                    {/* Navegação de Ano */}
+                    <Flex
+                      justify="space-between"
+                      align="center"
+                      p={3}
+                      bg={theme.bgSecondary}
+                      borderBottom="1px solid"
+                      borderColor={theme.borderLight}
+                    >
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setSelectedYear((prev) => prev - 1)}
+                        disabled={!availableYears.includes(selectedYear - 1)}
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <Text fontWeight="bold" fontSize="md" color={theme.textPrimary}>
+                        {selectedYear}
+                      </Text>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setSelectedYear((prev) => prev + 1)}
+                        disabled={!availableYears.includes(selectedYear + 1)}
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </Flex>
+
+                    {/* Grid de Meses */}
+                    <SimpleGrid columns={3} gap={2} p={3}>
+                      {MONTHS_PT.map((monthName, index) => {
+                        const monthValue = `${selectedYear}-${String(index + 1).padStart(2, '0')}`;
+                        const isSelected = referenceMonth === monthValue;
+                        const isCurrentMonth =
+                          new Date().getFullYear() === selectedYear &&
+                          new Date().getMonth() === index;
+
+                        return (
+                          <Box
+                            key={monthValue}
+                            py={2}
+                            px={1}
+                            textAlign="center"
+                            borderRadius="md"
+                            cursor="pointer"
+                            bg={isSelected ? theme.brandPrimary : 'transparent'}
+                            color={isSelected ? 'white' : theme.textPrimary}
+                            fontWeight={isSelected || isCurrentMonth ? 'bold' : 'normal'}
+                            border={isCurrentMonth && !isSelected ? '2px solid' : 'none'}
+                            borderColor={theme.brandPrimary}
+                            _hover={{ bg: isSelected ? theme.brandHover : theme.bgHover }}
+                            transition="all 0.15s"
+                            onClick={() => {
+                              setReferenceMonth(monthValue);
+                              setIsMonthPickerOpen(false);
+                            }}
+                          >
+                            <Text fontSize="xs">{monthName.slice(0, 3)}</Text>
+                          </Box>
+                        );
+                      })}
+                    </SimpleGrid>
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Popover.Root>
           </Flex>
+          {error && (
+            <Text fontSize="xs" color="red.200" mt={2}>
+              {error}
+            </Text>
+          )}
         </Box>
 
-        {/* KPI CARDS PREMIUM */}
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
-          {/* Card 1: Volumetria */}
+        {/* CARDS DE ESTATÍSTICAS - SIMPLIFICADOS */}
+        <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
           <Card.Root
-            bg={cardBg}
-            boxShadow="lg"
-            borderRadius="xl"
+            bg={theme.bgCard}
+            boxShadow="sm"
+            borderRadius="lg"
             overflow="hidden"
-            transition="all 0.3s"
-            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
-            <Box h="4px" bg="linear-gradient(90deg, #4299e1 0%, #0044CC 100%)" />
-            <Card.Body p={6}>
-              <Flex justify="space-between" align="start" mb={4}>
-                <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
-                    TOTAL ATENDIMENTOS
-                  </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
-                    {totalAtendimentos.toLocaleString()}
-                  </Heading>
-                </Box>
-                <Box bg="blue.50" p={3} borderRadius="xl">
-                  <Icon as={Headphones} color="blue.600" boxSize={7} />
-                </Box>
-              </Flex>
-              <HStack justify="space-between">
-                <Text fontSize="xs" color="gray.500">
-                  OPA + Ligações
-                </Text>
-                <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                  {equipeMetrics.length} técnicos
-                </Badge>
-              </HStack>
-            </Card.Body>
-          </Card.Root>
-
-          {/* Card 2: Qualidade */}
-          <Card.Root
-            bg={cardBg}
-            boxShadow="lg"
-            borderRadius="xl"
-            overflow="hidden"
-            transition="all 0.3s"
-            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
-          >
-            <Box
-              h="4px"
-              bg={`linear-gradient(90deg, ${mediaEquipe >= 90 ? '#48bb78' : '#ed8936'} 0%, ${mediaEquipe >= 90 ? '#38a169' : '#dd6b20'} 100%)`}
-            />
-            <Card.Body p={6}>
-              <Flex justify="space-between" align="start" mb={4}>
-                <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
-                    MÉDIA DA EQUIPE
-                  </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
-                    {mediaEquipe}
-                  </Heading>
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    atendimentos/técnico
-                  </Text>
-                </Box>
-                <Box bg={mediaEquipe >= 90 ? 'green.50' : 'orange.50'} p={3} borderRadius="xl">
-                  <Icon
-                    as={TrendingUp}
-                    color={mediaEquipe >= 90 ? 'green.600' : 'orange.600'}
-                    boxSize={7}
-                  />
-                </Box>
-              </Flex>
-              <Box>
-                <HStack justify="space-between" mb={1}>
-                  <Text fontSize="xs" color="gray.500">
-                    Meta: 80%
-                  </Text>
-                  <Text fontSize="xs" color="gray.700" fontWeight="bold">
-                    +{mediaEquipe - 80}%
-                  </Text>
-                </HStack>
-                <Box h="8px" bg="gray.200" borderRadius="full" overflow="hidden">
-                  <Box
-                    h="100%"
-                    w={`${mediaEquipe}%`}
-                    bg={mediaEquipe >= 90 ? 'green.500' : 'orange.500'}
-                    borderRadius="full"
-                    transition="width 0.3s"
-                  />
+            <Box h="3px" bg={theme.brandPrimary} />
+            <Card.Body p={5}>
+              <Text fontSize="xs" color={theme.textMuted} fontWeight="semibold" mb={1}>
+                TOTAL DE ATENDIMENTOS
+              </Text>
+              <Heading size="xl" color={theme.textPrimary}>
+                {totalAtendimentos.toLocaleString()}
+              </Heading>
+              <Text fontSize="xs" color={theme.textMuted} mt={1}>
+                OPA + Ligações
+              </Text>
+              <Box position="absolute" top={4} right={4}>
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'blue.900' : 'blue.50'}
+                  p={2}
+                  borderRadius="lg"
+                >
+                  <Icon as={Headphones} color={theme.brandPrimary} boxSize={5} />
                 </Box>
               </Box>
             </Card.Body>
           </Card.Root>
 
-          {/* Card 3: Financeiro */}
           <Card.Root
-            bg={cardBg}
-            boxShadow="lg"
-            borderRadius="xl"
+            bg={theme.bgCard}
+            boxShadow="sm"
+            borderRadius="lg"
             overflow="hidden"
-            transition="all 0.3s"
-            _hover={{
-              transform: 'translateY(-4px)',
-              boxShadow: '2xl',
-              cursor: 'pointer',
-            }}
-            onClick={() => router.push('/comissoes')}
-            role="button"
-            tabIndex={0}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
-            <Box h="4px" bg="linear-gradient(90deg, #9f7aea 0%, #667eea 100%)" />
-            <Card.Body p={6}>
-              <Flex justify="space-between" align="start" mb={4}>
-                <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
-                    PREVISÃO DE BÔNUS
-                  </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
-                    R$ {totalBonus.toLocaleString('pt-BR')}
-                  </Heading>
+            <Box h="3px" bg="cyan.500" />
+            <Card.Body p={5}>
+              <Text fontSize="xs" color={theme.textMuted} fontWeight="semibold" mb={1}>
+                MÉDIA POR COLABORADOR
+              </Text>
+              <Heading size="xl" color={theme.textPrimary}>
+                {mediaEquipe}
+              </Heading>
+              <Text fontSize="xs" color={theme.textMuted} mt={1}>
+                atendimentos/mês
+              </Text>
+              <Box position="absolute" top={4} right={4}>
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'cyan.900' : 'cyan.50'}
+                  p={2}
+                  borderRadius="lg"
+                >
+                  <Icon as={TrendingUp} color="cyan.500" boxSize={5} />
                 </Box>
-                <Box bg="purple.50" p={3} borderRadius="xl">
-                  <Icon as={Wallet} color="purple.600" boxSize={7} />
-                </Box>
-              </Flex>
-              <HStack justify="space-between">
-                <Text fontSize="xs" color="gray.500">
-                  Clique para gerenciar comissões
-                </Text>
-                <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                  {equipeMetrics.filter((t) => t.bonus > 0).length} elegíveis
-                </Badge>
-              </HStack>
+              </Box>
             </Card.Body>
           </Card.Root>
 
-          {/* Card 4: Performance */}
           <Card.Root
-            bg={cardBg}
-            boxShadow="lg"
-            borderRadius="xl"
+            bg={theme.bgCard}
+            boxShadow="sm"
+            borderRadius="lg"
             overflow="hidden"
-            transition="all 0.3s"
-            _hover={{ transform: 'translateY(-4px)', boxShadow: '2xl' }}
+            border="1px solid"
+            borderColor={theme.borderColor}
           >
-            <Box h="4px" bg="linear-gradient(90deg, #48bb78 0%, #38a169 100%)" />
-            <Card.Body p={6}>
-              <Flex justify="space-between" align="start" mb={4}>
-                <Box>
-                  <Text fontSize="xs" color="gray.500" fontWeight="bold" letterSpacing="wide">
-                    ALTA PERFORMANCE
-                  </Text>
-                  <Heading size="2xl" color="gray.800" mt={2}>
-                    {acimaDe90}
-                  </Heading>
+            <Box h="3px" bg="orange.500" />
+            <Card.Body p={5}>
+              <Text fontSize="xs" color={theme.textMuted} fontWeight="semibold" mb={1}>
+                EQUIPE ACIMA DE 90%
+              </Text>
+              <Heading size="xl" color={theme.textPrimary}>
+                {percentualEquipe90}%
+              </Heading>
+              <Text fontSize="xs" color={theme.textMuted} mt={1}>
+                {acimaDe90} de {equipeMetrics.length} técnicos
+              </Text>
+              <Box position="absolute" top={4} right={4}>
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'orange.900' : 'orange.50'}
+                  p={2}
+                  borderRadius="lg"
+                >
+                  <Icon as={Users} color="orange.500" boxSize={5} />
                 </Box>
-                <Box bg="green.50" p={3} borderRadius="xl">
-                  <Icon as={Award} color="green.600" boxSize={7} />
+              </Box>
+            </Card.Body>
+          </Card.Root>
+
+          <Card.Root
+            bg={theme.bgCard}
+            boxShadow="sm"
+            borderRadius="lg"
+            overflow="hidden"
+            border="1px solid"
+            borderColor={theme.borderColor}
+          >
+            <Box h="3px" bg={theme.success} />
+            <Card.Body p={5}>
+              <Text fontSize="xs" color={theme.textMuted} fontWeight="semibold" mb={1}>
+                TOTAL EM BÔNUS
+              </Text>
+              <Heading size="xl" color={theme.textPrimary}>
+                R$ {totalBonus.toLocaleString('pt-BR')}
+              </Heading>
+              <Text fontSize="xs" color={theme.textMuted} mt={1}>
+                a pagar este mês
+              </Text>
+              <Box position="absolute" top={4} right={4}>
+                <Box
+                  bg={theme.colorMode === 'dark' ? 'green.900' : 'green.50'}
+                  p={2}
+                  borderRadius="lg"
+                >
+                  <Icon as={Award} color={theme.success} boxSize={5} />
                 </Box>
-              </Flex>
-              <HStack justify="space-between">
-                <Text fontSize="xs" color="gray.500">
-                  Acima de 90%
-                </Text>
-                <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                  {percentualEquipe90}% da equipe
-                </Badge>
-              </HStack>
+              </Box>
             </Card.Body>
           </Card.Root>
         </SimpleGrid>
 
-        {/* GRÁFICOS E ANÁLISES */}
-        <SimpleGrid columns={{ base: 1, lg: 3 }} gap={6}>
-          {/* Gráfico Principal */}
+        {/* GRÁFICO E TOP PERFORMERS */}
+        <SimpleGrid columns={{ base: 1, lg: 4 }} gap={6}>
+          {/* Gráfico de Barras Verticais */}
           <Box
-            gridColumn={{ lg: 'span 2' }}
-            bg={cardBg}
+            gridColumn={{ lg: 'span 3' }}
+            bg={theme.bgCard}
             p={6}
             borderRadius="xl"
-            boxShadow="lg"
+            boxShadow="sm"
             border="1px solid"
-            borderColor={borderColor}
+            borderColor={theme.borderColor}
           >
-            <Flex justify="space-between" align="center" mb={6}>
-              <Box>
-                <Heading size="md" color="gray.700">
-                  Ranking de Performance
-                </Heading>
-                <Text fontSize="sm" color="gray.500" mt={1}>
-                  Aproveitamento por técnico
-                </Text>
-              </Box>
-              <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
-                {equipeMetrics.length} técnicos ativos
-              </Badge>
-            </Flex>
-            <Box h="320px" w="full">
+            <HStack mb={6}>
+              <Icon as={TrendingUp} color={theme.textSecondary} boxSize={5} />
+              <Heading size="md" color={theme.textPrimary}>
+                Performance da Equipe
+              </Heading>
+            </HStack>
+
+            <Box h="350px" w="full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={equipeOrdenada} layout="vertical" margin={{ left: 20, right: 60 }}>
+                <BarChart
+                  data={equipeOrdenada.map((item) => ({
+                    ...item,
+                    shortName: item.name.split(' ')[0],
+                  }))}
+                  margin={{ top: 20, right: 20, left: 20, bottom: 40 }}
+                >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    horizontal={true}
+                    stroke={theme.borderColor}
                     vertical={false}
-                    stroke="#E2E8F0"
                   />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#718096' }} />
+                  <XAxis
+                    dataKey="shortName"
+                    tick={{ fontSize: 12, fill: theme.textMuted, fontWeight: 500 }}
+                    tickLine={false}
+                    axisLine={{ stroke: theme.borderColor }}
+                    interval={0}
+                  />
                   <YAxis
-                    dataKey="name"
-                    type="category"
-                    width={120}
-                    tick={{ fontSize: 12, fill: '#FFFFFF', fontWeight: 600 }}
+                    domain={[0, 100]}
+                    tick={{ fontSize: 11, fill: theme.textMuted }}
+                    tickFormatter={(value) => `${value}%`}
                   />
                   <Tooltip
-                    cursor={{ fill: '#F7FAFC' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                     contentStyle={{
-                      backgroundColor: '#1A202C',
+                      backgroundColor: theme.colorMode === 'dark' ? '#1e293b' : '#1e293b',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: '10px 14px',
                     }}
-                    labelStyle={{ color: '#FFF', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#FFF', fontWeight: 'bold', marginBottom: '4px' }}
                     formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Performance']}
                   />
                   <ReferenceLine
-                    x={80}
-                    stroke="#E53E3E"
+                    y={80}
+                    stroke={theme.textMuted}
                     strokeDasharray="5 5"
-                    strokeWidth={2}
-                    label={{
-                      position: 'top',
-                      value: 'Meta 80%',
-                      fill: '#E53E3E',
-                      fontSize: 11,
-                      fontWeight: 'bold',
-                    }}
+                    strokeWidth={1}
                   />
-                  <Bar
-                    dataKey="percentual"
-                    radius={[0, 8, 8, 0]}
-                    label={{
-                      position: 'right',
-                      fill: '#FFFFFF',
-                      fontSize: 13,
-                      fontWeight: 'bold',
-                      offset: 5,
-                    }}
-                  >
+                  <Bar dataKey="percentual" radius={[4, 4, 0, 0]} maxBarSize={50}>
                     {equipeOrdenada.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
                           entry.percentual >= 90
-                            ? '#38A169'
+                            ? '#22c55e'
                             : entry.percentual >= 80
-                              ? '#4299E1'
-                              : '#E53E3E'
+                              ? '#eab308'
+                              : '#ef4444'
                         }
                       />
                     ))}
@@ -612,329 +621,230 @@ export default function DashboardSupport() {
             </Box>
           </Box>
 
-          {/* Painel Lateral */}
-          <VStack gap={6}>
-            {/* Regras de Pontuação */}
-            <Box
-              bg={cardBg}
-              p={6}
-              borderRadius="xl"
-              boxShadow="lg"
-              border="1px solid"
-              borderColor={borderColor}
-              w="full"
-            >
-              <Heading size="sm" mb={4} color="gray.700">
-                Sistema de Pontuação
+          {/* Top Performers */}
+          <Box
+            bg={theme.bgCard}
+            p={6}
+            borderRadius="xl"
+            boxShadow="sm"
+            border="1px solid"
+            borderColor={theme.borderColor}
+          >
+            <HStack mb={5}>
+              <Icon as={Trophy} color="yellow.500" boxSize={5} />
+              <Heading size="md" color={theme.textPrimary}>
+                Top Performers
               </Heading>
-              <VStack align="stretch" gap={3}>
-                <Flex p={3} bg="green.50" borderRadius="lg" justify="space-between" align="center">
-                  <HStack>
-                    <Badge colorScheme="green" variant="solid" fontSize="xs">
-                      5★
-                    </Badge>
-                    <Text fontSize="sm" fontWeight="medium">
-                      Excelente
-                    </Text>
-                  </HStack>
-                  <Text fontSize="sm" fontWeight="bold" color="green.700">
-                    +5 pts
-                  </Text>
-                </Flex>
-                <Flex p={3} bg="blue.50" borderRadius="lg" justify="space-between" align="center">
-                  <HStack>
-                    <Badge colorScheme="blue" variant="solid" fontSize="xs">
-                      4★
-                    </Badge>
-                    <Text fontSize="sm" fontWeight="medium">
-                      Bom
-                    </Text>
-                  </HStack>
-                  <Text fontSize="sm" fontWeight="bold" color="blue.700">
-                    +2 pts
-                  </Text>
-                </Flex>
-                <Flex p={3} bg="yellow.50" borderRadius="lg" justify="space-between" align="center">
-                  <HStack>
-                    <Badge colorScheme="yellow" variant="solid" fontSize="xs">
-                      3★
-                    </Badge>
-                    <Text fontSize="sm" fontWeight="medium">
-                      Regular
-                    </Text>
-                  </HStack>
-                  <Text fontSize="sm" fontWeight="bold" color="yellow.700">
-                    -3 pts
-                  </Text>
-                </Flex>
-                <Flex p={3} bg="red.50" borderRadius="lg" justify="space-between" align="center">
-                  <HStack>
-                    <Badge colorScheme="red" variant="solid" fontSize="xs">
-                      1★
-                    </Badge>
-                    <Text fontSize="sm" fontWeight="medium">
-                      Crítico
-                    </Text>
-                  </HStack>
-                  <Text fontSize="sm" fontWeight="bold" color="red.700">
-                    -10 pts
-                  </Text>
-                </Flex>
-              </VStack>
-            </Box>
+            </HStack>
 
-            {/* Critérios de Bônus */}
-            <Box
-              bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-              p={6}
-              borderRadius="xl"
-              boxShadow="lg"
-              w="full"
-            >
-              <Heading size="sm" mb={4} color="white">
-                Critérios de Bônus
-              </Heading>
-              <VStack align="stretch" gap={2}>
-                <HStack justify="space-between">
-                  <Text fontSize="sm" color="whiteAlpha.900">
-                    ≥ 100%
-                  </Text>
-                  <Text fontSize="sm" fontWeight="bold" color="white">
-                    R$ 500
-                  </Text>
+            <VStack gap={4} align="stretch">
+              {equipeOrdenada.slice(0, 5).map((row, index) => (
+                <HStack
+                  key={row.id}
+                  justify="space-between"
+                  p={2}
+                  borderRadius="lg"
+                  _hover={{ bg: theme.bgHover }}
+                >
+                  <HStack gap={3}>
+                    <Avatar.Root
+                      size="sm"
+                      bg={
+                        index === 0
+                          ? 'yellow.400'
+                          : index === 1
+                            ? 'gray.400'
+                            : index === 2
+                              ? 'orange.400'
+                              : theme.brandPrimary
+                      }
+                    >
+                      <Avatar.Fallback color="white" fontWeight="bold" fontSize="xs">
+                        {index + 1}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color={theme.textPrimary}>
+                        {row.name}
+                      </Text>
+                      <Text fontSize="xs" color={theme.textMuted}>
+                        {row.atendimentos} atend.
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <Badge
+                    colorPalette={
+                      row.percentual >= 90 ? 'green' : row.percentual >= 80 ? 'yellow' : 'red'
+                    }
+                    variant="solid"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {row.percentual}%
+                  </Badge>
                 </HStack>
-                <HStack justify="space-between">
-                  <Text fontSize="sm" color="whiteAlpha.900">
-                    ≥ 96%
-                  </Text>
-                  <Text fontSize="sm" fontWeight="bold" color="white">
-                    R$ 400
-                  </Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text fontSize="sm" color="whiteAlpha.900">
-                    ≥ 90%
-                  </Text>
-                  <Text fontSize="sm" fontWeight="bold" color="white">
-                    R$ 300
-                  </Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text fontSize="sm" color="whiteAlpha.900">
-                    ≥ 86%
-                  </Text>
-                  <Text fontSize="sm" fontWeight="bold" color="white">
-                    R$ 200
-                  </Text>
-                </HStack>
-                <HStack justify="space-between">
-                  <Text fontSize="sm" color="whiteAlpha.900">
-                    ≥ 80%
-                  </Text>
-                  <Text fontSize="sm" fontWeight="bold" color="white">
-                    R$ 100
-                  </Text>
-                </HStack>
-                <Box h="1px" bg="whiteAlpha.300" my={2} />
-                <Text fontSize="xs" color="whiteAlpha.800">
-                  *Mínimo 80% + pontuação acima da média do turno
+              ))}
+            </VStack>
+
+            {abaixoDaMeta > 0 && (
+              <Box mt={4} pt={4} borderTop="1px solid" borderColor={theme.borderLight}>
+                <Text fontSize="xs" color={theme.textMuted}>
+                  ⚠️ {abaixoDaMeta} abaixo da meta
                 </Text>
-              </VStack>
-            </Box>
-          </VStack>
+              </Box>
+            )}
+          </Box>
         </SimpleGrid>
 
-        {/* TABELA DETALHADA */}
+        {/* TABELA RANKING COMPLETO */}
         <Box
-          bg={cardBg}
+          bg={theme.bgCard}
           p={6}
           borderRadius="xl"
-          boxShadow="lg"
-          border="1px solid"
-          borderColor={borderColor}
+          boxShadow="sm"
           overflowX="auto"
+          border="1px solid"
+          borderColor={theme.borderColor}
         >
-          <Flex justify="space-between" align="center" mb={6}>
-            <Box>
-              <Heading size="md" color="gray.700">
-                Detalhamento Individual
-              </Heading>
-              <Text fontSize="sm" color="gray.500" mt={1}>
-                Cálculo completo de performance e bonificação
-              </Text>
-            </Box>
-            <HStack gap={2}>
-              <Badge colorScheme="green" variant="subtle">
-                {equipeMetrics.filter((t) => t.percentual >= 80).length} aptos
-              </Badge>
-              {abaixoDaMeta > 0 && (
-                <Badge colorScheme="red" variant="subtle">
-                  {abaixoDaMeta} em atenção
-                </Badge>
-              )}
-            </HStack>
-          </Flex>
+          <HStack mb={6}>
+            <Icon as={Award} color={theme.brandPrimary} boxSize={5} />
+            <Heading size="md" color={theme.textPrimary}>
+              Ranking Completo da Equipe
+            </Heading>
+          </HStack>
 
-          <Table.Root size="sm" variant="outline">
+          <Table.Root size="sm">
             <Table.Header>
-              <Table.Row bg="gray.50">
-                <Table.ColumnHeader fontWeight="bold" color="gray.700">
-                  Técnico
+              <Table.Row bg={theme.bgSecondary}>
+                <Table.ColumnHeader fontWeight="semibold" color={theme.textSecondary} w="50px">
+                  #
                 </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
-                  Turno
+                <Table.ColumnHeader fontWeight="semibold" color={theme.textSecondary}>
+                  Colaborador
                 </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
+                <Table.ColumnHeader
+                  textAlign="center"
+                  fontWeight="semibold"
+                  color={theme.textSecondary}
+                >
                   Atendimentos
                 </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
-                  Pontuação
-                </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
-                  Máx. Possível
-                </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
+                <Table.ColumnHeader fontWeight="semibold" color={theme.textSecondary} w="300px">
                   Performance
                 </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="center" fontWeight="bold" color="gray.700">
+                <Table.ColumnHeader
+                  textAlign="center"
+                  fontWeight="semibold"
+                  color={theme.textSecondary}
+                >
                   Status
                 </Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="end" fontWeight="bold" color="gray.700">
+                <Table.ColumnHeader
+                  textAlign="end"
+                  fontWeight="semibold"
+                  color={theme.textSecondary}
+                >
                   Bônus
                 </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {equipeOrdenada.map((row, index) => {
-                const bonus = row.bonus;
                 const isEligible = row.atingiuMedia && row.percentual >= 80;
+                const barColor =
+                  row.percentual >= 90
+                    ? 'green.400'
+                    : row.percentual >= 80
+                      ? 'yellow.400'
+                      : 'red.400';
 
                 return (
-                  <Table.Row
-                    key={index}
-                    bg={row.destaque ? 'blue.50' : 'white'}
-                    _hover={{ bg: row.destaque ? 'blue.100' : 'gray.50' }}
-                    transition="all 0.2s"
-                  >
+                  <Table.Row key={row.id} _hover={{ bg: theme.bgHover }}>
+                    <Table.Cell fontWeight="medium" color={theme.textMuted}>
+                      {index + 1}
+                    </Table.Cell>
                     <Table.Cell>
-                      <HStack>
-                        <Text fontWeight={row.destaque ? 'bold' : 'medium'}>{row.name}</Text>
-                        {row.destaque && (
-                          <Badge colorScheme="blue" variant="solid" fontSize="xs">
-                            Você
-                          </Badge>
-                        )}
+                      <HStack gap={3}>
+                        <Avatar.Root size="sm" bg={theme.brandPrimary}>
+                          <Avatar.Fallback color="white" fontWeight="bold" fontSize="xs">
+                            {row.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join('')}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
+                        <Box>
+                          <Text fontWeight="medium" color={theme.textPrimary}>
+                            {row.name}
+                          </Text>
+                          <Text fontSize="xs" color={theme.textMuted}>
+                            Turno {row.turno}
+                          </Text>
+                        </Box>
                       </HStack>
                     </Table.Cell>
-                    <Table.Cell textAlign="center" fontWeight="medium">
-                      {row.turno}
+                    <Table.Cell textAlign="center" fontWeight="medium" color={theme.textSecondary}>
+                      {row.atendimentos}
                     </Table.Cell>
-                    <Table.Cell textAlign="center" fontWeight="medium">
-                      {row.atendimentos.toLocaleString('pt-BR')}
-                    </Table.Cell>
-                    <Table.Cell textAlign="center" fontWeight="medium" color="blue.600">
-                      {row.pontuacao}
-                    </Table.Cell>
-                    <Table.Cell textAlign="center" color="gray.500" fontSize="sm">
-                      {row.maxPossivel}
-                    </Table.Cell>
-                    <Table.Cell textAlign="center">
-                      <VStack gap={1}>
-                        <Badge
-                          colorScheme={
-                            row.percentual >= 90 ? 'green' : row.percentual >= 80 ? 'blue' : 'red'
-                          }
-                          variant="solid"
+                    <Table.Cell>
+                      <HStack gap={3}>
+                        <Text
                           fontSize="sm"
-                          px={3}
-                          py={1}
+                          fontWeight="semibold"
+                          color={theme.textPrimary}
+                          w="45px"
                         >
                           {row.percentual}%
-                        </Badge>
-                        <Box w="60px" h="4px" bg="gray.200" borderRadius="full" overflow="hidden">
+                        </Text>
+                        <Box
+                          flex={1}
+                          h="10px"
+                          bg={theme.bgSecondary}
+                          borderRadius="full"
+                          overflow="hidden"
+                        >
                           <Box
                             h="100%"
                             w={`${row.percentual}%`}
-                            bg={
-                              row.percentual >= 90
-                                ? 'green.500'
-                                : row.percentual >= 80
-                                  ? 'blue.500'
-                                  : 'red.500'
-                            }
+                            bg={barColor}
                             borderRadius="full"
                             transition="width 0.3s"
                           />
                         </Box>
-                      </VStack>
+                      </HStack>
                     </Table.Cell>
                     <Table.Cell textAlign="center">
-                      {isEligible ? (
-                        <Box display="inline-flex" bg="green.50" p={2} borderRadius="lg">
-                          <Icon as={CheckCircle2} color="green.600" boxSize={5} />
-                        </Box>
-                      ) : (
-                        <Box display="inline-flex" bg="red.50" p={2} borderRadius="lg">
-                          <Icon as={XCircle} color="red.600" boxSize={5} />
-                        </Box>
-                      )}
+                      <Badge
+                        colorPalette={isEligible ? 'green' : 'red'}
+                        variant="subtle"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                        fontSize="xs"
+                      >
+                        <HStack gap={1}>
+                          <Icon as={CheckCircle2} boxSize={3} />
+                          <Text>{isEligible ? 'Qualificado' : 'Abaixo da meta'}</Text>
+                        </HStack>
+                      </Badge>
                     </Table.Cell>
                     <Table.Cell textAlign="end">
-                      {bonus > 0 ? (
-                        <Text fontWeight="bold" fontSize="md" color="green.600">
-                          R$ {bonus.toLocaleString('pt-BR')}
-                        </Text>
-                      ) : (
-                        <Text fontWeight="medium" fontSize="sm" color="gray.400">
-                          —
-                        </Text>
-                      )}
+                      <Text
+                        fontWeight="bold"
+                        fontSize="sm"
+                        color={row.bonus > 0 ? theme.success : theme.textMuted}
+                      >
+                        {row.bonus > 0 ? `R$ ${row.bonus}` : 'R$ 0'}
+                      </Text>
                     </Table.Cell>
                   </Table.Row>
                 );
               })}
             </Table.Body>
           </Table.Root>
-
-          {/* Rodapé da Tabela */}
-          <Flex
-            mt={4}
-            pt={4}
-            borderTop="2px solid"
-            borderColor="gray.200"
-            justify="space-between"
-            align="center"
-            bg="gray.50"
-            p={4}
-            borderRadius="lg"
-          >
-            <HStack gap={6}>
-              <VStack align="start" gap={0}>
-                <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                  TOTAL GERAL
-                </Text>
-                <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                  {totalAtendimentos} atendimentos
-                </Text>
-              </VStack>
-              <VStack align="start" gap={0}>
-                <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                  MÉDIA EQUIPE
-                </Text>
-                <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                  {mediaEquipe}
-                </Text>
-              </VStack>
-            </HStack>
-            <VStack align="end" gap={0}>
-              <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                BÔNUS TOTAL
-              </Text>
-              <Text fontSize="xl" fontWeight="bold" color="green.600">
-                R$ {totalBonus.toLocaleString()},00
-              </Text>
-            </VStack>
-          </Flex>
         </Box>
       </VStack>
     </Box>

@@ -21,12 +21,32 @@ export async function POST(req: Request) {
     }
 
     const response = NextResponse.json({ message: 'ok' });
+
+    // Cookie de sessão
     response.cookies.set('session_token', user.id, {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24, // 1 dia
+    });
+
+    // Cookie com ID do usuário
+    response.cookies.set('userId', user.id, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24,
+    });
+
+    // Cookie com role do usuário
+    response.cookies.set('userRole', user.role, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24,
     });
 
     return response;
