@@ -29,6 +29,16 @@ export async function POST(req: Request) {
       },
     });
 
+    // Se for supervisor, criar um setor automaticamente vinculado a ele
+    if (role === 'SUPERVISOR' || !role) {
+      await prisma.setor.create({
+        data: {
+          name: `Setor de ${name}`,
+          supervisorId: user.id,
+        },
+      });
+    }
+
     return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);

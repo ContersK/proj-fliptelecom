@@ -40,11 +40,36 @@ type Notificacao = {
   createdBy?: { name: string } | null;
 };
 
+type Usuario = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  setor?: { id: string; name: string } | null;
+};
+
 export function Navbar() {
   const router = useRouter();
   const theme = useFlipTheme();
   const [notifications, setNotifications] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<Usuario | null>(null);
+
+  // Buscar dados do usuário logado
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/usuarios/me');
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+      }
+    }
+    fetchUser();
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -366,14 +391,25 @@ export function Navbar() {
                 transition="all 0.2s"
               >
                 <Avatar.Root size="sm" bg={theme.brandPrimary} color="white">
-                  <Avatar.Fallback fontWeight="bold">LG</Avatar.Fallback>
+                  <Avatar.Fallback fontWeight="bold">
+                    {user?.name
+                      ?.split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase() || '??'}
+                  </Avatar.Fallback>
                 </Avatar.Root>
                 <VStack gap={0} align="start" display={{ base: 'none', md: 'flex' }}>
                   <Text fontSize="sm" fontWeight="bold" color={theme.textPrimary}>
-                    Luan G.
+                    {user?.name
+                      ?.split(' ')
+                      .slice(0, 2)
+                      .map((n, i) => (i === 0 ? n : n[0] + '.'))
+                      .join(' ') || 'Carregando...'}
                   </Text>
                   <Text fontSize="xs" color={theme.textSecondary}>
-                    Administrador
+                    {user?.role === 'ADMIN' ? 'Administrador' : 'Supervisor'}
                   </Text>
                 </VStack>
               </HStack>
@@ -391,10 +427,10 @@ export function Navbar() {
               >
                 <Box px={4} py={3} borderBottom="1px solid" borderColor={theme.borderLight}>
                   <Text fontSize="sm" fontWeight="bold" color={theme.textPrimary}>
-                    Luan Gomes
+                    {user?.name || 'Carregando...'}
                   </Text>
                   <Text fontSize="xs" color={theme.textSecondary}>
-                    luan@fliptelecom.com.br
+                    {user?.email || ''}
                   </Text>
                 </Box>
                 <Menu.Item
