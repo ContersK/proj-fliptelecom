@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { hash } from 'bcryptjs';
 
 // GET - Lista todos os supervisores (não admins)
 export async function GET() {
@@ -57,7 +58,7 @@ export async function PUT(request: Request) {
     const updateData: { name?: string; email?: string; password?: string } = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
-    if (password) updateData.password = password; // Em produção, fazer hash da senha
+    if (password) updateData.password = await hash(password, 10);
 
     const updated = await prisma.gerencia.update({
       where: { id },

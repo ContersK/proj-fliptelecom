@@ -83,6 +83,72 @@ export default function FuncionariosPage() {
     countNota1: 0,
   });
   const [savingMetricas, setSavingMetricas] = useState(false);
+  const [loadingMetricas, setLoadingMetricas] = useState(false);
+  const [isPeriodoClosed, setIsPeriodoClosed] = useState(false);
+
+  // Função para verificar se o período está fechado
+  async function checkPeriodoFechado(funcionarioId: string, month: number, year: number) {
+    try {
+      const res = await fetch(
+        `/api/periodo-status?funcionarioId=${funcionarioId}&month=${month}&year=${year}`,
+      );
+      const data = await res.json();
+      setIsPeriodoClosed(data.isClosed || false);
+    } catch (error) {
+      console.error('Erro ao verificar status do período:', error);
+      setIsPeriodoClosed(false);
+    }
+  }
+
+  // Função para buscar métricas existentes
+  async function fetchMetricasExistentes(funcionarioId: string, month: number, year: number) {
+    setLoadingMetricas(true);
+    try {
+      // Busca métricas e status do período em paralelo
+      const [metricasRes, periodoRes] = await Promise.all([
+        fetch(`/api/metricas?funcionarioId=${funcionarioId}&month=${month}&year=${year}`),
+        fetch(`/api/periodo-status?funcionarioId=${funcionarioId}&month=${month}&year=${year}`),
+      ]);
+
+      const data = await metricasRes.json();
+      const periodoData = await periodoRes.json();
+
+      setIsPeriodoClosed(periodoData.isClosed || false);
+
+      if (data && data.length > 0) {
+        const metrica = data[0];
+        setMetricasForm((prev) => ({
+          ...prev,
+          countNota5: metrica.countNota5 || 0,
+          countNota4: metrica.countNota4 || 0,
+          countNota3: metrica.countNota3 || 0,
+          countNota2: metrica.countNota2 || 0,
+          countNota1: metrica.countNota1 || 0,
+        }));
+      } else {
+        // Sem métricas para esse período, zera os campos
+        setMetricasForm((prev) => ({
+          ...prev,
+          countNota5: 0,
+          countNota4: 0,
+          countNota3: 0,
+          countNota2: 0,
+          countNota1: 0,
+        }));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar métricas existentes:', error);
+    } finally {
+      setLoadingMetricas(false);
+    }
+  }
+
+  // Efeito para recarregar métricas quando mês/ano mudar
+  useEffect(() => {
+    if (isMetricasDrawerOpen && metricasForm.funcionarioId) {
+      fetchMetricasExistentes(metricasForm.funcionarioId, metricasForm.month, metricasForm.year);
+    }
+  }, [metricasForm.month, metricasForm.year, isMetricasDrawerOpen, metricasForm.funcionarioId]);
 
   // 1. CARREGAR DADOS DO BANCO
   async function fetchFuncionarios() {
@@ -160,12 +226,15 @@ export default function FuncionariosPage() {
   }
 
   // 5. ABRIR MODAL DE MÉTRICAS
-  function handleOpenMetricas(funcionario: Funcionario) {
+  async function handleOpenMetricas(funcionario: Funcionario) {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
     setMetricasForm({
       funcionarioId: funcionario.id,
       funcionarioNome: funcionario.nome,
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
+      month: currentMonth,
+      year: currentYear,
       countNota5: 0,
       countNota4: 0,
       countNota3: 0,
@@ -173,6 +242,9 @@ export default function FuncionariosPage() {
       countNota1: 0,
     });
     setIsMetricasDrawerOpen(true);
+
+    // Busca as métricas existentes para o período atual
+    await fetchMetricasExistentes(funcionario.id, currentMonth, currentYear);
   }
 
   // 6. SALVAR MÉTRICAS
@@ -625,18 +697,46 @@ export default function FuncionariosPage() {
 
               {/* Avaliações */}
               <Box>
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  mb={3}
-                  color={theme.textSecondary}
-                  textTransform="uppercase"
-                  letterSpacing="wider"
-                >
-                  Quantidade de Avaliações por Nota
-                </Text>
+                <HStack justify="space-between" mb={3}>
+                  <Text
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color={theme.textSecondary}
+                    textTransform="uppercase"
+                    letterSpacing="wider"
+                  >
+                    Quantidade de Avaliações por Nota
+                  </Text>
+                  {loadingMetricas && (
+                    <HStack gap={2}>
+                      <Spinner size="sm" color={theme.brandPrimary} />
+                      <Text fontSize="xs" color={theme.textMuted}>
+                        Carregando...
+                      </Text>
+                    </HStack>
+                  )}
+                </HStack>
 
-                <VStack gap={3} align="stretch">
+                {isPeriodoClosed && !loadingMetricas && (
+                  <Box
+                    bg="orange.100"
+                    border="1px solid"
+                    borderColor="orange.300"
+                    borderRadius="md"
+                    p={3}
+                    mb={3}
+                  >
+                    <Text fontSize="sm" color="orange.800" fontWeight="medium">
+                      🔒 Este período já foi fechado. As notas não podem ser alteradas.
+                    </Text>
+                  </Box>
+                )}
+
+                <VStack
+                  gap={3}
+                  align="stretch"
+                  opacity={loadingMetricas || isPeriodoClosed ? 0.6 : 1}
+                >
                   {/* Nota 5 */}
                   <Box
                     bg={theme.bgSecondary}
@@ -688,6 +788,8 @@ export default function FuncionariosPage() {
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota5}
+                        disabled={isPeriodoClosed}
+                        readOnly={isPeriodoClosed}
                         onChange={(e) =>
                           setMetricasForm({
                             ...metricasForm,
@@ -749,6 +851,8 @@ export default function FuncionariosPage() {
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota4}
+                        disabled={isPeriodoClosed}
+                        readOnly={isPeriodoClosed}
                         onChange={(e) =>
                           setMetricasForm({
                             ...metricasForm,
@@ -810,6 +914,8 @@ export default function FuncionariosPage() {
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota3}
+                        disabled={isPeriodoClosed}
+                        readOnly={isPeriodoClosed}
                         onChange={(e) =>
                           setMetricasForm({
                             ...metricasForm,
@@ -871,6 +977,8 @@ export default function FuncionariosPage() {
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota2}
+                        disabled={isPeriodoClosed}
+                        readOnly={isPeriodoClosed}
                         onChange={(e) =>
                           setMetricasForm({
                             ...metricasForm,
@@ -932,6 +1040,8 @@ export default function FuncionariosPage() {
                           shadow: 'outline',
                         }}
                         value={metricasForm.countNota1}
+                        disabled={isPeriodoClosed}
+                        readOnly={isPeriodoClosed}
                         onChange={(e) =>
                           setMetricasForm({
                             ...metricasForm,
@@ -983,14 +1093,15 @@ export default function FuncionariosPage() {
               Cancelar
             </Button>
             <Button
-              bg={theme.brandPrimary}
+              bg={isPeriodoClosed ? 'gray.400' : theme.brandPrimary}
               color="white"
               size="lg"
-              _hover={{ bg: theme.brandHover }}
+              _hover={{ bg: isPeriodoClosed ? 'gray.400' : theme.brandHover }}
               onClick={handleSaveMetricas}
               loading={savingMetricas}
+              disabled={isPeriodoClosed}
             >
-              Salvar Métricas
+              {isPeriodoClosed ? 'Período Fechado' : 'Salvar Métricas'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -12,8 +12,10 @@ import {
   Flex,
   Icon,
   HStack,
+  Dialog,
+  Portal,
 } from '@chakra-ui/react';
-import { MdLock, MdMail, MdArrowForward, MdCheckCircle } from 'react-icons/md';
+import { MdLock, MdMail, MdArrowForward, MdCheckCircle, MdClose } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -26,6 +28,54 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Estados para modal de esqueci senha
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      setForgotError('Informe seu email.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+      setForgotError('Email inválido.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const res = await fetch('/api/reset-senha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Erro ao solicitar reset');
+      }
+
+      setForgotSuccess(true);
+    } catch (error) {
+      setForgotError(error instanceof Error ? error.message : 'Erro ao solicitar reset');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    setForgotPasswordOpen(false);
+    setForgotEmail('');
+    setForgotSuccess(false);
+    setForgotError('');
+  };
 
   const validateForm = () => {
     const newErrors = { email: '', password: '' };
@@ -436,6 +486,7 @@ export default function LoginPage() {
                       color="blue.600"
                       fontWeight="semibold"
                       cursor="pointer"
+                      onClick={() => setForgotPasswordOpen(true)}
                       _hover={{
                         color: 'blue.700',
                         textDecoration: 'underline',
@@ -581,6 +632,131 @@ export default function LoginPage() {
           </Box>
         </Box>
       </Box>
+
+      {/* Modal Esqueci Minha Senha */}
+      <Dialog.Root open={forgotPasswordOpen} onOpenChange={(e) => !e.open && closeForgotModal()}>
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.600" backdropFilter="blur(4px)" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              bg="white"
+              borderRadius="2xl"
+              boxShadow="2xl"
+              maxW="400px"
+              w="90%"
+              p={0}
+              overflow="hidden"
+            >
+              {/* Header */}
+              <Box bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" p={6} position="relative">
+                <Dialog.CloseTrigger
+                  position="absolute"
+                  top={4}
+                  right={4}
+                  color="white"
+                  _hover={{ bg: 'whiteAlpha.200' }}
+                  borderRadius="full"
+                  p={1}
+                >
+                  <Icon as={MdClose} boxSize={5} />
+                </Dialog.CloseTrigger>
+                <VStack gap={2} align="center">
+                  <Box bg="whiteAlpha.200" p={3} borderRadius="full">
+                    <Icon as={MdLock} boxSize={8} color="white" />
+                  </Box>
+                  <Dialog.Title color="white" fontSize="xl" fontWeight="bold">
+                    Recuperar Senha
+                  </Dialog.Title>
+                  <Dialog.Description color="whiteAlpha.800" fontSize="sm" textAlign="center">
+                    Informe seu email e enviaremos uma solicitação aos administradores.
+                  </Dialog.Description>
+                </VStack>
+              </Box>
+
+              {/* Body */}
+              <Box p={6}>
+                {forgotSuccess ? (
+                  <VStack gap={4} py={4}>
+                    <Box bg="green.100" p={4} borderRadius="full">
+                      <Icon as={MdCheckCircle} boxSize={12} color="green.500" />
+                    </Box>
+                    <Text fontWeight="bold" color="gray.800" fontSize="lg">
+                      Solicitação Enviada!
+                    </Text>
+                    <Text color="gray.600" textAlign="center" fontSize="sm">
+                      Os administradores foram notificados. Você receberá uma nova senha em breve.
+                    </Text>
+                    <Button
+                      w="full"
+                      bg="gray.100"
+                      color="gray.700"
+                      _hover={{ bg: 'gray.200' }}
+                      onClick={closeForgotModal}
+                    >
+                      Fechar
+                    </Button>
+                  </VStack>
+                ) : (
+                  <VStack gap={4}>
+                    <Box w="full">
+                      <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
+                        Seu Email
+                      </Text>
+                      <InputGroup
+                        w="full"
+                        startElement={<Icon as={MdMail} boxSize={5} color="blue.500" ml={3} />}
+                      >
+                        <Input
+                          type="email"
+                          placeholder="seu@email.com"
+                          value={forgotEmail}
+                          onChange={(e) => {
+                            setForgotEmail(e.target.value);
+                            setForgotError('');
+                          }}
+                          size="lg"
+                          bg="gray.50"
+                          border="2px solid"
+                          borderColor="gray.200"
+                          _focus={{
+                            borderColor: 'blue.500',
+                            bg: 'white',
+                          }}
+                        />
+                      </InputGroup>
+                      {forgotError && (
+                        <Text color="red.500" fontSize="sm" mt={2}>
+                          {forgotError}
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Button
+                      w="full"
+                      size="lg"
+                      bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      color="white"
+                      fontWeight="bold"
+                      onClick={handleForgotPassword}
+                      disabled={forgotLoading}
+                      _hover={{
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+                      }}
+                    >
+                      {forgotLoading ? 'Enviando...' : 'Solicitar Nova Senha'}
+                    </Button>
+
+                    <Text fontSize="xs" color="gray.500" textAlign="center">
+                      Um administrador irá resetar sua senha e você poderá acessar novamente.
+                    </Text>
+                  </VStack>
+                )}
+              </Box>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </>
   );
 }
